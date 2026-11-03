@@ -1,10 +1,17 @@
 /**
  * BATTLE ARENA - LAST ONE STANDING
- * Engine de Combate: Suporte a Multiplayer Online Sincronizado e IA Avançada
+ * Engine de Combate com Suporte a Mobile Touch (Joystick Virtual) e PWA
  */
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+
+// Registro de PWA Service Worker na Arena
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js').catch(() => {});
+    });
+}
 
 const elements = {
     aliveCount: document.getElementById('alive-count'),
@@ -35,7 +42,6 @@ const urlParams = new URLSearchParams(window.location.search);
 const roomParam = urlParams.get('room');
 const sessionData = JSON.parse(sessionStorage.getItem('arenaSession') || 'null');
 const isOnlineRequested = !!roomParam || (sessionData && sessionData.isOnline);
-const targetRoomCode = roomParam || (sessionData ? sessionData.roomCode : null);
 
 function resizeCanvas() {
     canvas.width = window.innerWidth;
@@ -75,6 +81,155 @@ window.addEventListener('mousedown', e => {
 window.addEventListener('mouseup', e => {
     if (e.button === 0) mouse.clicked = false;
 });
+
+// ==========================================
+// CONTROLES MOBILE / TOUCH (JOYSTICK & BOTÕES)
+// ==========================================
+const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
+const mobileControlsLayer = document.getElementById('mobile-controls');
+const joystickZone = document.getElementById('joystick-zone');
+const joystickBase = document.getElementById('joystick-base');
+const joystickStick = document.getElementById('joystick-stick');
+const btnTouchSprint = document.getElementById('btn-touch-sprint');
+const btnTouchAttack = document.getElementById('btn-touch-attack');
+
+if (isTouchDevice && mobileControlsLayer) {
+    mobileControlsLayer.style.display = 'block';
+
+    let joystickActive = false;
+    let joystickTouchId = null;
+
+    joystickZone.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.changedTouches[0];
+        joystickTouchId = touch.identifier;
+        joystickActive = true;
+        updateJoystick(touch);
+    }, { passive: false });
+
+    window.addEventListener('touchmove', (e) => {
+        if (!joystickActive) return;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === joystickTouchId) {
+                e.preventDefault();
+                updateJoystick(e.changedTouches[i]);
+                break;
+            }
+        }
+    }, { passive: false });
+
+    const endJoystick = (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === joystickTouchId) {
+                joystickActive = false;
+                joystickTouchId = null;
+                joystickStick.style.transform = 'translate(0px, 0px)';
+                keys['KeyW'] = false;
+                keys['KeyS'] = false;
+                keys['KeyA'] = false;
+                keys['KeyD'] = false;
+                break;
+            }
+        }
+    };
+
+    window.addEventListener('touchend', endJoystick);
+    window.addEventListener('touchcancel', endJoystick);
+
+    function updateJoystick(touch) {
+        const rect = joystickBase.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        const dx = touch.clientX - centerX;
+        const dy = touch.clientY - centerY;
+        const dist = Math.hypot(dx, dy);
+        const angle = Math.atan2(dy, dx);
+
+        const maxDist = 42;
+        const clampedDist = Math.min(dist, maxDist);
+        const stickX = Math.cos(angle) * clampedDist;
+        const stickY = Math.sin(angle) * clampedDist;
+
+        joystickStick.style.transform = `translate(${stickX}px, ${stickY}px)`;
+
+        // Movimentação
+        if (dist > 10) {
+            keys['KeyW'] = dy < -12;
+            keys['KeyS'] = dy > 12;
+            keys['KeyA'] = dx < -12;
+            keys['KeyD'] = dx > 12;
+
+            // Mira na direção do joystick se não estiver tocando na tela para mirar
+            const p1 = Game.players.find(p => p.id === 'P1' || p.id === Game.localPlayerId);
+            if (p1) {
+                mouse.x = p1.x + Math.cos(angle) * 100;
+                mouse.y = p1.y + Math.sin(angle) * 100;
+            }
+        } else {
+            keys['KeyW'] = false;
+            keys['KeyS'] = false;
+            keys['KeyA'] = false;
+            keys['KeyD'] = false;
+        }
+    }
+
+    // Botão de Sprint Touch
+    if (btnTouchSprint) {
+        btnTouchSprint.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            keys['Space'] = true;
+            btnTouchSprint.classList.add('active');
+        }, { passive: false });
+
+        const endSprint = () => {
+            keys['Space'] = false;
+            btnTouchSprint.classList.remove('active');
+        };
+        btnTouchSprint.addEventListener('touchend', endSprint);
+        btnTouchSprint.addEventListener('touchcancel', endSprint);
+    }
+
+    // Botão de Ataque Touch
+    if (btnTouchAttack) {
+        btnTouchAttack.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            mouse.clicked = true;
+            mouse.attackTriggered = true;
+            btnTouchAttack.classList.add('active');
+        }, { passive: false });
+
+        const endAttack = () => {
+            mouse.clicked = false;
+            btnTouchAttack.classList.remove('active');
+        };
+        btnTouchAttack.addEventListener('touchend', endAttack);
+        btnTouchAttack.addEventListener('touchcancel', endAttack);
+    }
+
+    // Toque na tela para mirar e atacar diretamente
+    canvas.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        if (touch && touch.clientX > window.innerWidth * 0.4) {
+            mouse.x = touch.clientX;
+            mouse.y = touch.clientY;
+            mouse.clicked = true;
+            mouse.attackTriggered = true;
+        }
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', (e) => {
+        const touch = e.touches[0];
+        if (touch && touch.clientX > window.innerWidth * 0.4) {
+            mouse.x = touch.clientX;
+            mouse.y = touch.clientY;
+        }
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', () => {
+        mouse.clicked = false;
+    }, { passive: true });
+}
 
 // ==========================================
 // CLASSE PROJÉTIL
@@ -653,7 +808,7 @@ const Game = {
             radius: Math.max(canvas.width, canvas.height) * 0.45
         };
 
-        if (isOnlineRequested && typeof io !== 'undefined') {
+        if (isOnlineRequested) {
             this.tryInitOnline();
         } else {
             this.initLocal();
@@ -683,74 +838,93 @@ const Game = {
     },
 
     tryInitOnline() {
-        try {
-            const url = window.location.protocol.startsWith('http') ? window.location.origin : 'http://localhost:3000';
-            this.socket = io(url);
+        // Carrega Socket.io dinamicamente se necessário
+        const connectSocket = () => {
+            try {
+                const url = window.location.protocol.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+                this.socket = io(url);
 
-            this.socket.on('connect', () => {
-                this.isOnline = true;
-                this.localPlayerId = this.socket.id;
-            });
-
-            this.socket.on('game_snapshot', (snapshot) => {
-                const scaleX = canvas.width / 1920;
-                const scaleY = canvas.height / 1080;
-
-                this.zone = {
-                    x: snapshot.zone.x * scaleX,
-                    y: snapshot.zone.y * scaleY,
-                    radius: snapshot.zone.radius * Math.min(scaleX, scaleY)
-                };
-
-                this.players = snapshot.players.map(sp => {
-                    const p = new Player(sp.id, sp.name, sp.color, sp.x * scaleX, sp.y * scaleY, sp.isBot, sp.weapon, null, sp.charId);
-                    p.hp = sp.hp;
-                    p.maxHp = sp.maxHp;
-                    p.alive = sp.alive;
-                    p.angle = sp.angle;
-                    p.currentAmmo = sp.currentAmmo;
-                    p.maxAmmo = sp.maxAmmo;
-                    p.reloadTimer = sp.reloadTimer;
-                    p.attackFrame = sp.attackFrame;
-                    p.healAura = sp.healAura;
-
-                    if (sp.id === this.localPlayerId) {
-                        p.updateUI();
-                        if (!sp.alive && !this.isSpectating) this.startSpectating();
-                    }
-                    return p;
+                this.socket.on('connect', () => {
+                    this.isOnline = true;
+                    this.localPlayerId = this.socket.id;
                 });
 
-                this.projectiles = snapshot.projectiles.map(pr => {
-                    const p = new Projectile(pr.x * scaleX, pr.y * scaleY, 0, pr.color, '', '', pr.charId);
-                    p.vx = pr.vx * scaleX;
-                    p.vy = pr.vy * scaleY;
-                    return p;
+                this.socket.on('game_snapshot', (snapshot) => {
+                    const scaleX = canvas.width / 1920;
+                    const scaleY = canvas.height / 1080;
+
+                    this.zone = {
+                        x: snapshot.zone.x * scaleX,
+                        y: snapshot.zone.y * scaleY,
+                        radius: snapshot.zone.radius * Math.min(scaleX, scaleY)
+                    };
+
+                    this.players = snapshot.players.map(sp => {
+                        const p = new Player(sp.id, sp.name, sp.color, sp.x * scaleX, sp.y * scaleY, sp.isBot, sp.weapon, null, sp.charId);
+                        p.hp = sp.hp;
+                        p.maxHp = sp.maxHp;
+                        p.alive = sp.alive;
+                        p.angle = sp.angle;
+                        p.currentAmmo = sp.currentAmmo;
+                        p.maxAmmo = sp.maxAmmo;
+                        p.reloadTimer = sp.reloadTimer;
+                        p.attackFrame = sp.attackFrame;
+                        p.healAura = sp.healAura;
+
+                        if (sp.id === this.localPlayerId) {
+                            p.updateUI();
+                            if (!sp.alive && !this.isSpectating) this.startSpectating();
+                        }
+                        return p;
+                    });
+
+                    this.projectiles = snapshot.projectiles.map(pr => {
+                        const p = new Projectile(pr.x * scaleX, pr.y * scaleY, 0, pr.color, '', '', pr.charId);
+                        p.vx = pr.vx * scaleX;
+                        p.vy = pr.vy * scaleY;
+                        return p;
+                    });
+
+                    elements.aliveCount.innerText = snapshot.aliveCount;
                 });
 
-                elements.aliveCount.innerText = snapshot.aliveCount;
-            });
+                this.socket.on('player_eliminated', (data) => {
+                    this.addKillMsg(data.victim, data.killer, data.color);
+                });
 
-            this.socket.on('player_eliminated', (data) => {
-                this.addKillMsg(data.victim, data.killer, data.color);
-            });
+                this.socket.on('screen_shake', (data) => {
+                    this.shakeFrames = data.duration || 60;
+                    this.showWarning("⚠️ MALDIÇÃO DE MALACOR! ⚠️", "rgba(177, 156, 217, 0.9)");
+                });
 
-            this.socket.on('screen_shake', (data) => {
-                this.shakeFrames = data.duration || 60;
-                this.showWarning("⚠️ MALDIÇÃO DE MALACOR! ⚠️", "rgba(177, 156, 217, 0.9)");
-            });
+                this.socket.on('match_finished', (data) => {
+                    this.active = false;
+                    this.showRanking(data.winner, data.ranking);
+                });
 
-            this.socket.on('match_finished', (data) => {
-                this.active = false;
-                this.showRanking(data.winner, data.ranking);
-            });
+                this.socket.on('connect_error', () => {
+                    this.initLocal();
+                });
 
-            this.socket.on('connect_error', () => {
+            } catch (e) {
                 this.initLocal();
-            });
+            }
+        };
 
-        } catch (e) {
-            this.initLocal();
+        if (typeof io !== 'undefined') {
+            connectSocket();
+        } else {
+            const script = document.createElement('script');
+            script.src = '/socket.io/socket.io.js';
+            script.onload = connectSocket;
+            script.onerror = () => {
+                const cdn = document.createElement('script');
+                cdn.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
+                cdn.onload = connectSocket;
+                cdn.onerror = () => this.initLocal();
+                document.head.appendChild(cdn);
+            };
+            document.head.appendChild(script);
         }
     },
 
@@ -924,7 +1098,7 @@ const LoadingManager = {
     start() {
         Game.active = false;
 
-        // Ao clicar ou pressionar espaço, pula imediatamente o tutorial
+        // Ao tocar na tela ou pressionar espaço, pula imediatamente o tutorial
         const skip = () => {
             if (this.interval) {
                 clearInterval(this.interval);
@@ -932,6 +1106,7 @@ const LoadingManager = {
             }
         };
         window.addEventListener('click', skip, { once: true });
+        window.addEventListener('touchstart', skip, { once: true });
         window.addEventListener('keydown', (e) => { if (e.code === 'Space') skip(); }, { once: true });
 
         // Carregamento suave em ~4 segundos

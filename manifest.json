@@ -1,0 +1,20 @@
+{
+  "name": "Battle Arena: Last One Standing",
+  "short_name": "Battle Arena",
+  "description": "Jogo de combate Battle Royale 2D Top-Down com salas online e IA avançada",
+  "start_url": "menu.html",
+  "id": "/menu.html",
+  "display": "standalone",
+  "background_color": "#070a14",
+  "theme_color": "#00d2ff",
+  "orientation": "any",
+  "categories": ["games", "action"],
+  "icons": [
+    {
+      "src": "assets/logo-los.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

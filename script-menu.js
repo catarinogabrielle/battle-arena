@@ -28,6 +28,7 @@ if (savedPlayer.charId) {
 }
 
 function renderRoster() {
+    if (!rosterContainer) return;
     rosterContainer.innerHTML = '';
     characters.forEach((char, index) => {
         const btn = document.createElement('div');
@@ -41,22 +42,24 @@ function renderRoster() {
             document.querySelectorAll('.char-thumb').forEach(t => t.classList.remove('active'));
             btn.classList.add('active');
 
-            mainImg.style.opacity = '0';
-            setTimeout(() => {
-                mainImg.src = char.img;
-                mainName.innerText = char.name;
-                mainClass.innerText = char.class;
-                mainImg.style.opacity = '1';
-            }, 150);
+            if (mainImg) {
+                mainImg.style.opacity = '0';
+                setTimeout(() => {
+                    mainImg.src = char.img;
+                    if (mainName) mainName.innerText = char.name;
+                    if (mainClass) mainClass.innerText = char.class;
+                    mainImg.style.opacity = '1';
+                }, 150);
+            }
         });
         rosterContainer.appendChild(btn);
     });
 
     const initChar = characters[selectedCharIndex];
-    if (initChar) {
+    if (initChar && mainImg) {
         mainImg.src = initChar.img;
-        mainName.innerText = initChar.name;
-        mainClass.innerText = initChar.class;
+        if (mainName) mainName.innerText = initChar.name;
+        if (mainClass) mainClass.innerText = initChar.class;
     }
 }
 renderRoster();
@@ -77,6 +80,62 @@ if (nickElement) {
 }
 
 // ==========================================
+// PWA: SERVICE WORKER & BOTÃO DE INSTALAÇÃO
+// ==========================================
+let deferredPWAInstallPrompt = null;
+const btnInstallPwa = document.getElementById('btn-install-pwa');
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+            .then(reg => console.log('✅ ServiceWorker registrado com sucesso:', reg.scope))
+            .catch(err => console.log('❌ Falha ao registrar ServiceWorker:', err));
+    });
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPWAInstallPrompt = e;
+    console.log('📱 PWA pronto para instalação');
+    if (btnInstallPwa) {
+        btnInstallPwa.classList.add('install-ready');
+    }
+});
+
+window.addEventListener('appinstalled', () => {
+    console.log('🎉 Battle Arena instalado com sucesso!');
+    deferredPWAInstallPrompt = null;
+    if (btnInstallPwa) {
+        btnInstallPwa.innerHTML = '<div class="orb-icon"><i class="fas fa-check"></i></div><span>App Instalado</span>';
+        setTimeout(() => { btnInstallPwa.style.display = 'none'; }, 3000);
+    }
+});
+
+if (btnInstallPwa) {
+    btnInstallPwa.addEventListener('click', async () => {
+        if (deferredPWAInstallPrompt) {
+            deferredPWAInstallPrompt.prompt();
+            const choice = await deferredPWAInstallPrompt.userChoice;
+            if (choice && choice.outcome === 'accepted') {
+                btnInstallPwa.style.display = 'none';
+            }
+            deferredPWAInstallPrompt = null;
+        } else {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+            if (isStandalone) {
+                alert('✅ O Battle Arena já está instalado e rodando como aplicativo!');
+            } else if (isIOS) {
+                alert('📱 Para instalar no iPhone/iPad:\n1. Toque no botão de Compartilhar (ícone com seta para cima no Safari)\n2. Role para baixo e selecione "Adicionar à Tela de Início"');
+            } else {
+                alert('💡 Para instalar o App:\nNo Chrome ou Edge, clique no ícone de instalar na barra de navegação ou no menu de 3 pontos > "Instalar Battle Arena".');
+            }
+        }
+    });
+}
+
+// ==========================================
 // MODAL & MULTIPLAYER EM TEMPO REAL
 // ==========================================
 const modal = document.getElementById('room-modal');
@@ -85,40 +144,52 @@ const viewCreate = document.getElementById('view-create-room');
 const modalTitle = document.getElementById('modal-main-title');
 
 // Botões do Modal
-document.getElementById('btn-play').onclick = () => {
-    viewCreate.classList.add('hidden');
-    viewList.classList.remove('hidden');
-    modalTitle.innerHTML = '<i class="fas fa-globe"></i> ARENA MULTIPLAYER';
-    modal.classList.remove('hidden');
-    carregarSalas();
-};
-
-document.getElementById('close-modal-btn').onclick = () => modal.classList.add('hidden');
-modal.addEventListener('click', (e) => {
-    if (e.target === modal) modal.classList.add('hidden');
-});
-
-document.getElementById('btn-show-create').onclick = () => {
-    viewList.classList.add('hidden');
-    setTimeout(() => {
-        viewCreate.classList.remove('hidden');
-        modalTitle.innerHTML = '<i class="fas fa-plus-circle"></i> CRIAR NOVA SALA';
-    }, 150);
-};
-
-document.getElementById('btn-cancel-create').onclick = () => {
-    viewCreate.classList.add('hidden');
-    setTimeout(() => {
+const btnPlay = document.getElementById('btn-play');
+if (btnPlay) {
+    btnPlay.onclick = () => {
+        viewCreate.classList.add('hidden');
         viewList.classList.remove('hidden');
         modalTitle.innerHTML = '<i class="fas fa-globe"></i> ARENA MULTIPLAYER';
-    }, 150);
-};
+        modal.classList.remove('hidden');
+        carregarSalas();
+    };
+}
+
+const closeBtn = document.getElementById('close-modal-btn');
+if (closeBtn) closeBtn.onclick = () => modal.classList.add('hidden');
+
+if (modal) {
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.add('hidden');
+    });
+}
+
+const btnShowCreate = document.getElementById('btn-show-create');
+if (btnShowCreate) {
+    btnShowCreate.onclick = () => {
+        viewList.classList.add('hidden');
+        setTimeout(() => {
+            viewCreate.classList.remove('hidden');
+            modalTitle.innerHTML = '<i class="fas fa-plus-circle"></i> CRIAR NOVA SALA';
+        }, 150);
+    };
+}
+
+const btnCancelCreate = document.getElementById('btn-cancel-create');
+if (btnCancelCreate) {
+    btnCancelCreate.onclick = () => {
+        viewCreate.classList.add('hidden');
+        setTimeout(() => {
+            viewList.classList.remove('hidden');
+            modalTitle.innerHTML = '<i class="fas fa-globe"></i> ARENA MULTIPLAYER';
+        }, 150);
+    };
+}
 
 // ==========================================
 // INTEGRAÇÃO COM SERVIDOR VIA SOCKET.IO
 // ==========================================
 let socket = null;
-let publicRooms = [];
 
 function loadSocketIO(onReady) {
     if (typeof io !== 'undefined') {
@@ -152,7 +223,6 @@ loadSocketIO(() => {
         });
 
         socket.on('room_list_updated', (rooms) => {
-            publicRooms = rooms;
             renderRoomList(rooms);
         });
 
@@ -194,6 +264,7 @@ function carregarSalas() {
 
 function renderRoomList(rooms) {
     const roomListContainer = document.getElementById('room-list');
+    if (!roomListContainer) return;
     roomListContainer.innerHTML = '';
 
     // 1. Opção Fixa Sempre Disponível: Treino Solo vs IA Avançada
@@ -297,37 +368,38 @@ if (codeBtn && codeInput) {
 }
 
 // Criar e Entrar
-document.getElementById('btn-confirm-create').onclick = () => {
-    const name = document.getElementById('new-room-name').value.trim() || 'Sala Privada';
-    const map = document.getElementById('new-room-map').value;
-    const players = parseInt(document.getElementById('new-room-players').value) || 4;
-    const isPrivate = document.getElementById('new-room-private').checked;
+const btnConfirmCreate = document.getElementById('btn-confirm-create');
+if (btnConfirmCreate) {
+    btnConfirmCreate.onclick = () => {
+        const name = document.getElementById('new-room-name').value.trim() || 'Sala Privada';
+        const map = document.getElementById('new-room-map').value;
+        const players = parseInt(document.getElementById('new-room-players').value) || 4;
+        const isPrivate = document.getElementById('new-room-private').checked;
 
-    const btn = document.getElementById('btn-confirm-create');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> CRIANDO...';
+        btnConfirmCreate.innerHTML = '<i class="fas fa-spinner fa-spin"></i> CRIANDO...';
 
-    const playerConfig = getPlayerConfig();
-    localStorage.setItem('arenaPlayer', JSON.stringify(playerConfig));
+        const playerConfig = getPlayerConfig();
+        localStorage.setItem('arenaPlayer', JSON.stringify(playerConfig));
 
-    if (socket && socket.connected) {
-        socket.emit('create_room', {
-            name: name,
-            map: map,
-            maxPlayers: players,
-            isPrivate: isPrivate,
-            fillBots: true,
-            playerInfo: playerConfig
-        });
-    } else {
-        // Fallback offline
-        setTimeout(() => {
-            sessionStorage.setItem('arenaSession', JSON.stringify({
-                isOnline: false,
+        if (socket && socket.connected) {
+            socket.emit('create_room', {
                 name: name,
                 map: map,
-                maxPlayers: players
-            }));
-            window.location.href = 'arena.html';
-        }, 500);
-    }
-};
+                maxPlayers: players,
+                isPrivate: isPrivate,
+                fillBots: true,
+                playerInfo: playerConfig
+            });
+        } else {
+            setTimeout(() => {
+                sessionStorage.setItem('arenaSession', JSON.stringify({
+                    isOnline: false,
+                    name: name,
+                    map: map,
+                    maxPlayers: players
+                }));
+                window.location.href = 'arena.html';
+            }, 500);
+        }
+    };
+}

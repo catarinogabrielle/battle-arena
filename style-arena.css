@@ -753,3 +753,174 @@ canvas {
     color: #ff3d68 !important;
     text-shadow: 0 0 30px #ff3d68 !important;
 }
+
+
+/* ========================================================= */
+/* CONTROLES MOBILE / TOUCH & RESPONSIVIDADE                 */
+/* ========================================================= */
+
+.mobile-controls-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 50;
+    display: none;
+}
+
+.joystick-zone {
+    position: absolute;
+    bottom: 25px;
+    left: 25px;
+    width: 140px;
+    height: 140px;
+    pointer-events: auto;
+    touch-action: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.joystick-base {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(0, 210, 255, 0.08);
+    border: 2px solid rgba(0, 210, 255, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 0 20px rgba(0, 210, 255, 0.15);
+}
+
+.joystick-stick {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00d2ff, #0077ff);
+    box-shadow: 0 0 15px #00d2ff;
+    pointer-events: none;
+    will-change: transform;
+}
+
+.touch-actions-zone {
+    position: absolute;
+    bottom: 25px;
+    right: 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    pointer-events: auto;
+}
+
+.touch-action-btn {
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.btn-attack {
+    width: 76px;
+    height: 76px;
+    background: linear-gradient(135deg, rgba(255, 61, 104, 0.85), rgba(200, 20, 50, 0.95));
+    color: white;
+    font-size: 1.8em;
+    border: 3px solid #ff3d68;
+    box-shadow: 0 0 20px rgba(255, 61, 104, 0.5);
+}
+
+.btn-attack:active, .btn-attack.active {
+    transform: scale(0.92);
+    box-shadow: 0 0 35px #ff3d68;
+}
+
+.btn-sprint {
+    width: 52px;
+    height: 52px;
+    background: rgba(0, 210, 255, 0.2);
+    color: #00d2ff;
+    font-size: 1.3em;
+    border: 2px solid #00d2ff;
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+}
+
+.btn-sprint:active, .btn-sprint.active {
+    background: #00d2ff;
+    color: #050b14;
+    transform: scale(0.92);
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .mobile-controls-layer {
+        display: block;
+    }
+    .controls-hint {
+        display: none !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .hud-top {
+        padding: 10px 15px;
+    }
+    .btn-leave {
+        padding: 6px 12px;
+        font-size: 0.85em;
+    }
+    .hud-zone {
+        font-size: 0.9em;
+    }
+    .hud-alive {
+        padding: 6px 12px;
+        font-size: 0.9em;
+    }
+    .hud-bottom {
+        bottom: 15px;
+    }
+    .player-panel {
+        padding: 10px 15px;
+        width: 92vw;
+        max-width: 320px;
+    }
+    .tutorial-title {
+        font-size: 1.8em;
+        letter-spacing: 3px;
+    }
+    .tutorial-panels {
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+    }
+    .tutorial-box {
+        width: 90vw;
+        max-width: 340px;
+        padding: 20px;
+    }
+    .box-header {
+        font-size: 1.2em;
+        margin-bottom: 15px;
+    }
+    #loading-screen {
+        padding: 15px 10px;
+    }
+    .tutorial-wrapper {
+        gap: 20px;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    .kill-feed {
+        top: 60px;
+        right: 15px;
+        width: 220px;
+    }
+}

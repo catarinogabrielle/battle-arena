@@ -128,3 +128,30 @@ input:focus {
 .login-links a:hover {
     color: #00d2ff;
 }
+
+
+/* ========================================== */
+/* RESPONSIVIDADE (MOBILE & TABLET)          */
+/* ========================================== */
+@media (max-width: 480px) {
+    .login-container {
+        width: 100%;
+        padding: 15px;
+    }
+
+    .game-logo img {
+        max-width: 220px;
+    }
+
+    .login-panel {
+        width: 100%;
+        max-width: 360px;
+        padding: 30px 20px;
+        border-radius: 16px;
+    }
+
+    .login-button {
+        font-size: 1.1em;
+        padding: 13px;
+    }
+}

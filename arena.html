@@ -3,8 +3,14 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Battle Arena - Combate</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#00d2ff">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="assets/logo-los.png">
     <link rel="stylesheet" href="style-arena.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="shortcut icon" href="assets/logo-los.png" type="image/x-icon">
@@ -39,7 +45,7 @@
                 </div>
 
                 <div class="tutorial-box">
-                    <div class="box-header">MOUSE</div>
+                    <div class="box-header">MOUSE / TOQUE</div>
                     <div class="mouse-layout">
                         <div class="css-mouse">
                             <div class="mouse-left-click active-click"></div>
@@ -52,7 +58,7 @@
                                 <span class="sub-text">Mirar e Direcionar</span>
                             </div>
                             <div class="desc-item">
-                                <span class="highlight-text">CLIQUE ESQUERDO</span>
+                                <span class="highlight-text">CLIQUE / TOQUE</span>
                                 <span class="sub-text">Atacar (Ataque Básico)</span>
                             </div>
                         </div>
@@ -114,9 +120,26 @@
         </div>
 
         <div class="controls-hint">
-            W,A,S,D: Mover | ESPAÇO: Correr | MOUSE: Atacar
+            W,A,S,D: Mover | ESPAÇO: Correr | MOUSE / TOQUE: Atacar
         </div>
     </footer>
+
+    <!-- CONTROLES MOBILE / TOUCH (EXIBIDOS AUTOMATICAMENTE EM DISPOSITIVOS DE TOQUE) -->
+    <div id="mobile-controls" class="mobile-controls-layer">
+        <div id="joystick-zone" class="joystick-zone">
+            <div id="joystick-base" class="joystick-base">
+                <div id="joystick-stick" class="joystick-stick"></div>
+            </div>
+        </div>
+        <div class="touch-actions-zone">
+            <button id="btn-touch-sprint" class="touch-action-btn btn-sprint" aria-label="Correr">
+                <i class="fas fa-running"></i>
+            </button>
+            <button id="btn-touch-attack" class="touch-action-btn btn-attack" aria-label="Atacar">
+                <i class="fas fa-crosshairs"></i>
+            </button>
+        </div>
+    </div>
 
     <div id="game-over-screen" class="hidden overlay-screen">
         <h2 class="victory-title">PARTIDA FINALIZADA</h2>
