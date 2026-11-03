@@ -1,120 +1,415 @@
+/**
+ * BATTLE ARENA: LAST ONE STANDING - MODERN MENU CONTROLLER
+ * Full Web Audio SFX, Dynamic Hero Showcase, Live Stats & Multiplayer
+ */
+
 // ==========================================
-// ROSTER DE PERSONAGENS E STATUS
+// 1. ROSTER DE CAMPEÕES & DADOS COMPLETOS
 // ==========================================
 const characters = [
-    { id: 'kaelen', name: 'KAELEN', class: 'GUERREIRO DO SOL', img: 'assets/kaelen.png', color: '#00d2ff', weapon: 'melee' },
-    { id: 'elara', name: 'ELARA', class: 'PATRULHEIRA DA FLORESTA', img: 'assets/elara.png', color: '#A7FF83', weapon: 'ranged' },
-    { id: 'malacor', name: 'MALACOR', class: 'MAGO DAS SOMBRAS', img: 'assets/malacor.png', color: '#B19CD9', weapon: 'ranged' },
-    { id: 'lyra', name: 'LYRA', class: 'SACERDOTISA DA LUZ', img: 'assets/lyra.png', color: '#F0E68C', weapon: 'melee' },
-    { id: 'silas', name: 'SILAS', class: 'ASSASSINO DA NÉVOA', img: 'assets/silas.png', color: '#ffffff', weapon: 'melee' },
-    { id: 'morwen', name: 'MORWEN', class: 'INVOCADORA DOS ELEMENTOS', img: 'assets/morwen.png', color: '#ff3d68', weapon: 'ranged' }
+    {
+        id: 'kaelen',
+        name: 'KAELEN',
+        class: 'GUERREIRO DO SOL',
+        role: 'COMBATENTE',
+        img: 'assets/kaelen.png',
+        color: '#00d2ff',
+        weapon: 'melee',
+        weaponType: 'CORPO A CORPO',
+        weaponName: 'Espada Solar',
+        stats: { dano: 85, defesa: 80, velocidade: 70, alcance: 35 },
+        desc: 'Golpes devastadores com lâmina de plasma e defesa sólida.'
+    },
+    {
+        id: 'elara',
+        name: 'ELARA',
+        class: 'PATRULHEIRA DA FLORESTA',
+        role: 'ATIRADORA',
+        img: 'assets/elara.png',
+        color: '#00ff88',
+        weapon: 'ranged',
+        weaponType: 'À DISTÂNCIA',
+        weaponName: 'Arco Cósmico',
+        stats: { dano: 75, defesa: 55, velocidade: 95, alcance: 90 },
+        desc: 'Alta agilidade e disparos velozes a longa distância.'
+    },
+    {
+        id: 'malacor',
+        name: 'MALACOR',
+        class: 'MAGO DAS SOMBRAS',
+        role: 'CONJURADOR',
+        img: 'assets/malacor.png',
+        color: '#b19cd9',
+        weapon: 'ranged',
+        weaponType: 'À DISTÂNCIA',
+        weaponName: 'Orbe do Vazio',
+        stats: { dano: 95, defesa: 45, velocidade: 60, alcance: 85 },
+        desc: 'Projéteis arcanos sombrios com altíssimo poder explosivo.'
+    },
+    {
+        id: 'lyra',
+        name: 'LYRA',
+        class: 'SACERDOTISA DA LUZ',
+        role: 'SUPORTE / PALADINA',
+        img: 'assets/lyra.png',
+        color: '#ffd700',
+        weapon: 'melee',
+        weaponType: 'CORPO A CORPO',
+        weaponName: 'Cetro da Aurora',
+        stats: { dano: 70, defesa: 85, velocidade: 75, alcance: 40 },
+        desc: 'Regenera sua própria vida a cada impacto bem-sucedido.'
+    },
+    {
+        id: 'silas',
+        name: 'SILAS',
+        class: 'ASSASSINO DA NÉVOA',
+        role: 'ASSASSINO VELOZ',
+        img: 'assets/silas.png',
+        color: '#ffffff',
+        weapon: 'melee',
+        weaponType: 'CORPO A CORPO',
+        weaponName: 'Adagas Espectrais',
+        stats: { dano: 100, defesa: 40, velocidade: 100, alcance: 30 },
+        desc: 'Velocidade extrema e letalidade em investidas precisas.'
+    },
+    {
+        id: 'morwen',
+        name: 'MORWEN',
+        class: 'INVOCADORA ELEMENTAL',
+        role: 'DESTRUIDORA',
+        img: 'assets/morwen.png',
+        color: '#ff3d68',
+        weapon: 'ranged',
+        weaponType: 'À DISTÂNCIA',
+        weaponName: 'Chama Primitiva',
+        stats: { dano: 90, defesa: 60, velocidade: 70, alcance: 80 },
+        desc: 'Esferas flamejantes de alta combustão contínua.'
+    }
 ];
 
 let selectedCharIndex = 0;
+
+// Elementos da interface
 const rosterContainer = document.getElementById('roster-container');
 const mainImg = document.getElementById('main-hero-img');
 const mainName = document.getElementById('main-hero-name');
 const mainClass = document.getElementById('main-hero-class');
+const mainRole = document.getElementById('main-hero-role');
+const mainWeaponType = document.getElementById('main-hero-weapon-type');
+const mainWeaponDesc = document.getElementById('main-hero-weapon-desc');
+const hudAvatarImg = document.getElementById('hud-avatar-img');
 const nickElement = document.getElementById('player-nickname');
+const rankUserName = document.getElementById('rank-user-name');
+const rankTop1Name = document.getElementById('rank-top1-name');
 
-// Carrega nickname salvo se houver
+// ==========================================
+// 2. SISTEMA DE ÁUDIO SINTETIZADO (WEB AUDIO)
+// ==========================================
+const AudioEngine = {
+    ctx: null,
+    muted: localStorage.getItem('arena_sound_muted') === 'true',
+
+    init() {
+        if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    },
+
+    play(type) {
+        if (this.muted) return;
+        try {
+            this.init();
+            if (!this.ctx) return;
+            const now = this.ctx.currentTime;
+
+            if (type === 'hover') {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(420, now);
+                osc.frequency.exponentialRampToValueAtTime(640, now + 0.04);
+                gain.gain.setValueAtTime(0.025, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.04);
+            } else if (type === 'select') {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(240, now);
+                osc.frequency.exponentialRampToValueAtTime(560, now + 0.12);
+                gain.gain.setValueAtTime(0.07, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.12);
+            } else if (type === 'play') {
+                const osc1 = this.ctx.createOscillator();
+                const osc2 = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc1.type = 'sawtooth';
+                osc2.type = 'sine';
+                osc1.frequency.setValueAtTime(120, now);
+                osc1.frequency.exponentialRampToValueAtTime(480, now + 0.28);
+                osc2.frequency.setValueAtTime(70, now);
+                osc2.frequency.exponentialRampToValueAtTime(240, now + 0.28);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc1.start(now);
+                osc2.start(now);
+                osc1.stop(now + 0.32);
+                osc2.stop(now + 0.32);
+            } else if (type === 'click') {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(700, now);
+                gain.gain.setValueAtTime(0.04, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.035);
+            }
+        } catch (e) {}
+    },
+
+    toggle() {
+        this.muted = !this.muted;
+        localStorage.setItem('arena_sound_muted', this.muted);
+        return this.muted;
+    }
+};
+
+// Configuração do botão de som no Header
+const btnSound = document.getElementById('btn-toggle-sound');
+const soundIcon = document.getElementById('sound-icon');
+if (btnSound && soundIcon) {
+    const updateSoundUI = () => {
+        if (AudioEngine.muted) {
+            soundIcon.className = 'fas fa-volume-mute';
+            btnSound.style.opacity = '0.5';
+        } else {
+            soundIcon.className = 'fas fa-volume-up';
+            btnSound.style.opacity = '1';
+        }
+    };
+    updateSoundUI();
+    btnSound.addEventListener('click', () => {
+        const isMuted = AudioEngine.toggle();
+        updateSoundUI();
+        if (!isMuted) AudioEngine.play('click');
+    });
+}
+
+// Botão de Fullscreen no Header
+const btnFullscreen = document.getElementById('btn-toggle-fullscreen');
+if (btnFullscreen) {
+    btnFullscreen.addEventListener('click', () => {
+        AudioEngine.play('click');
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+            document.exitFullscreen().catch(() => {});
+        }
+    });
+}
+
+// ==========================================
+// 3. CARREGAMENTO DE DADOS DO JOGADOR
+// ==========================================
 const savedPlayer = JSON.parse(localStorage.getItem('arenaPlayer') || '{}');
 const playerInfo = JSON.parse(localStorage.getItem('arenaPlayerInfo') || '{}');
-const activeNickname = savedPlayer.nickname || playerInfo.username;
-if (activeNickname && nickElement) {
+const activeNickname = savedPlayer.nickname || playerInfo.username || 'CATARINO';
+
+if (nickElement) {
     nickElement.innerText = activeNickname;
 }
+if (rankUserName) {
+    rankUserName.innerText = `${activeNickname} (VOCÊ)`;
+}
+if (rankTop1Name) {
+    rankTop1Name.innerText = activeNickname;
+}
+
 if (savedPlayer.charId) {
     const idx = characters.findIndex(c => c.id === savedPlayer.charId);
     if (idx !== -1) selectedCharIndex = idx;
 }
 
-function renderRoster() {
-    if (!rosterContainer) return;
-    rosterContainer.innerHTML = '';
-    characters.forEach((char, index) => {
-        const btn = document.createElement('div');
-        btn.classList.add('char-thumb');
-        if (index === selectedCharIndex) btn.classList.add('active');
-
-        btn.innerHTML = `<img src="${char.img}" alt="${char.name}">`;
-
-        btn.addEventListener('click', () => {
-            selectedCharIndex = index;
-            document.querySelectorAll('.char-thumb').forEach(t => t.classList.remove('active'));
-            btn.classList.add('active');
-
-            if (mainImg) {
-                mainImg.style.opacity = '0';
-                setTimeout(() => {
-                    mainImg.src = char.img;
-                    if (mainName) mainName.innerText = char.name;
-                    if (mainClass) mainClass.innerText = char.class;
-                    mainImg.style.opacity = '1';
-                }, 150);
-            }
-        });
-        rosterContainer.appendChild(btn);
+// Edição de Nickname
+const btnEditNick = document.getElementById('btn-edit-nick');
+if (btnEditNick && nickElement) {
+    btnEditNick.addEventListener('click', () => {
+        AudioEngine.play('click');
+        nickElement.focus();
+        const range = document.createRange();
+        range.selectNodeContents(nickElement);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
     });
-
-    const initChar = characters[selectedCharIndex];
-    if (initChar && mainImg) {
-        mainImg.src = initChar.img;
-        if (mainName) mainName.innerText = initChar.name;
-        if (mainClass) mainClass.innerText = initChar.class;
-    }
-}
-renderRoster();
-
-function getPlayerConfig() {
-    return {
-        nickname: nickElement ? nickElement.innerText.trim() : 'CATARINO',
-        color: characters[selectedCharIndex].color,
-        weapon: characters[selectedCharIndex].weapon,
-        charId: characters[selectedCharIndex].id
-    };
 }
 
 if (nickElement) {
     nickElement.addEventListener('blur', () => {
-        localStorage.setItem('arenaPlayer', JSON.stringify(getPlayerConfig()));
+        savePlayerData();
+    });
+    nickElement.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            nickElement.blur();
+        }
     });
 }
 
+function savePlayerData() {
+    const config = getPlayerConfig();
+    localStorage.setItem('arenaPlayer', JSON.stringify(config));
+    if (rankUserName) rankUserName.innerText = `${config.nickname} (VOCÊ)`;
+    if (rankTop1Name) rankTop1Name.innerText = config.nickname;
+}
+
+function getPlayerConfig() {
+    const char = characters[selectedCharIndex] || characters[0];
+    return {
+        nickname: nickElement ? nickElement.innerText.trim() : 'CATARINO',
+        color: char.color,
+        weapon: char.weapon,
+        charId: char.id
+    };
+}
+
 // ==========================================
-// PWA: SERVICE WORKER & BOTÃO DE INSTALAÇÃO
+// 4. SELEÇÃO & RENDERIZAÇÃO DO ROSTER
+// ==========================================
+function updateHeroDetails(char) {
+    // Atualiza variável CSS do tema da página
+    document.documentElement.style.setProperty('--hero-theme-color', char.color);
+
+    // Textos e Badges
+    if (mainName) mainName.innerText = char.name;
+    if (mainClass) mainClass.innerText = char.class;
+    if (mainRole) mainRole.innerHTML = `<i class="fas fa-shield-alt"></i> ${char.role}`;
+    if (mainWeaponType) {
+        const icon = char.weapon === 'melee' ? 'fa-fist-raised' : 'fa-bullseye';
+        mainWeaponType.innerHTML = `<i class="fas ${icon}"></i> ${char.weaponType}`;
+    }
+    if (mainWeaponDesc) {
+        mainWeaponDesc.innerHTML = `<i class="fas fa-wand-magic-sparkles"></i> <span><strong>${char.weaponName}:</strong> ${char.desc}</span>`;
+    }
+
+    // Avatar no Top HUD
+    if (hudAvatarImg) {
+        hudAvatarImg.src = char.img;
+    }
+
+    // Barras de Status Animadas
+    const statDano = document.getElementById('stat-dano');
+    const statDefesa = document.getElementById('stat-defesa');
+    const statVelocidade = document.getElementById('stat-velocidade');
+    const statAlcance = document.getElementById('stat-alcance');
+
+    const numDano = document.getElementById('stat-num-dano');
+    const numDefesa = document.getElementById('stat-num-defesa');
+    const numVelocidade = document.getElementById('stat-num-velocidade');
+    const numAlcance = document.getElementById('stat-num-alcance');
+
+    if (statDano) statDano.style.width = char.stats.dano + '%';
+    if (statDefesa) statDefesa.style.width = char.stats.defesa + '%';
+    if (statVelocidade) statVelocidade.style.width = char.stats.velocidade + '%';
+    if (statAlcance) statAlcance.style.width = char.stats.alcance + '%';
+
+    if (numDano) numDano.innerText = char.stats.dano;
+    if (numDefesa) numDefesa.innerText = char.stats.defesa;
+    if (numVelocidade) numVelocidade.innerText = char.stats.velocidade;
+    if (numAlcance) numAlcance.innerText = char.stats.alcance;
+}
+
+function renderRoster() {
+    if (!rosterContainer) return;
+    rosterContainer.innerHTML = '';
+
+    characters.forEach((char, index) => {
+        const thumb = document.createElement('div');
+        thumb.classList.add('char-thumb');
+        if (index === selectedCharIndex) thumb.classList.add('active');
+
+        thumb.innerHTML = `<img src="${char.img}" alt="${char.name}" loading="lazy">`;
+
+        thumb.addEventListener('mouseenter', () => AudioEngine.play('hover'));
+
+        thumb.addEventListener('click', () => {
+            if (selectedCharIndex === index) return;
+            selectedCharIndex = index;
+            AudioEngine.play('select');
+
+            document.querySelectorAll('.char-thumb').forEach(t => t.classList.remove('active'));
+            thumb.classList.add('active');
+
+            if (mainImg) {
+                mainImg.style.opacity = '0';
+                mainImg.style.transform = 'translateY(15px) scale(0.96)';
+                setTimeout(() => {
+                    mainImg.src = char.img;
+                    updateHeroDetails(char);
+                    mainImg.style.opacity = '1';
+                    mainImg.style.transform = 'translateY(0) scale(1)';
+                }, 140);
+            }
+
+            savePlayerData();
+        });
+
+        rosterContainer.appendChild(thumb);
+    });
+
+    const initialHero = characters[selectedCharIndex] || characters[0];
+    if (mainImg) mainImg.src = initialHero.img;
+    updateHeroDetails(initialHero);
+}
+
+renderRoster();
+
+// ==========================================
+// 5. PWA: SERVICE WORKER & INSTALAÇÃO
 // ==========================================
 let deferredPWAInstallPrompt = null;
 const btnInstallPwa = document.getElementById('btn-install-pwa');
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js')
-            .then(reg => console.log('✅ ServiceWorker registrado com sucesso:', reg.scope))
-            .catch(err => console.log('❌ Falha ao registrar ServiceWorker:', err));
+        navigator.serviceWorker.register('service-worker.js').catch(() => {});
     });
 }
 
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPWAInstallPrompt = e;
-    console.log('📱 PWA pronto para instalação');
-    if (btnInstallPwa) {
-        btnInstallPwa.classList.add('install-ready');
-    }
+    if (btnInstallPwa) btnInstallPwa.classList.add('install-ready');
 });
 
 window.addEventListener('appinstalled', () => {
-    console.log('🎉 Battle Arena instalado com sucesso!');
     deferredPWAInstallPrompt = null;
     if (btnInstallPwa) {
-        btnInstallPwa.innerHTML = '<div class="orb-icon"><i class="fas fa-check"></i></div><span>App Instalado</span>';
+        btnInstallPwa.innerHTML = '<div class="dock-icon"><i class="fas fa-check"></i></div><span>Instalado</span>';
         setTimeout(() => { btnInstallPwa.style.display = 'none'; }, 3000);
     }
 });
 
 if (btnInstallPwa) {
     btnInstallPwa.addEventListener('click', async () => {
+        AudioEngine.play('click');
         if (deferredPWAInstallPrompt) {
             deferredPWAInstallPrompt.prompt();
             const choice = await deferredPWAInstallPrompt.userChoice;
@@ -127,21 +422,76 @@ if (btnInstallPwa) {
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
             if (isStandalone) {
-                alert('✅ O Battle Arena já está instalado e rodando como aplicativo!');
+                alert('✅ Battle Arena já está instalado e rodando como aplicativo!');
             } else if (isIOS) {
-                alert('📱 Para instalar no iPhone/iPad:\n1. Toque no botão de Compartilhar (ícone com seta para cima no Safari)\n2. Role para baixo e selecione "Adicionar à Tela de Início"');
+                alert('📱 Para instalar no iPhone/iPad:\n1. Toque no ícone de Compartilhar (no Safari)\n2. Selecione "Adicionar à Tela de Início"');
             } else {
-                alert('💡 Para instalar o App:\nNo Chrome ou Edge, clique no ícone de instalar na barra de navegação ou no menu de 3 pontos > "Instalar Battle Arena".');
+                alert('💡 Para instalar o Battle Arena:\nNo Chrome ou Edge, clique no ícone de instalar na barra de navegação ou no menu de opções.');
             }
         }
     });
 }
 
+// ==========================================
+// 6. MODAIS (MULTIPLAYER, RANKING, GUIA)
+// ==========================================
+const roomModal = document.getElementById('room-modal');
+const rankingModal = document.getElementById('ranking-modal');
+const guideModal = document.getElementById('guide-modal');
+
+// Botão de Play Massivo
+const btnPlay = document.getElementById('btn-play');
+if (btnPlay) {
+    btnPlay.addEventListener('mouseenter', () => AudioEngine.play('hover'));
+    btnPlay.addEventListener('click', () => {
+        AudioEngine.play('play');
+        if (roomModal) {
+            switchModalTab('rooms');
+            roomModal.classList.remove('hidden');
+            carregarSalas();
+        }
+    });
+}
+
+// Botão de Ranking
+const btnRanking = document.getElementById('btn-ranking');
+if (btnRanking && rankingModal) {
+    btnRanking.addEventListener('click', () => {
+        AudioEngine.play('click');
+        rankingModal.classList.remove('hidden');
+    });
+}
+const closeRankingBtn = document.getElementById('close-ranking-btn');
+if (closeRankingBtn && rankingModal) {
+    closeRankingBtn.addEventListener('click', () => {
+        AudioEngine.play('click');
+        rankingModal.classList.add('hidden');
+    });
+}
+
+// Botão de Guia de Controles
+const btnGuide = document.getElementById('btn-guide');
+if (btnGuide && guideModal) {
+    btnGuide.addEventListener('click', () => {
+        AudioEngine.play('click');
+        guideModal.classList.remove('hidden');
+    });
+}
+const closeGuideBtn = document.getElementById('close-guide-btn');
+if (closeGuideBtn && guideModal) {
+    closeGuideBtn.addEventListener('click', () => {
+        AudioEngine.play('click');
+        guideModal.classList.add('hidden');
+    });
+}
+
+// Botão de Opções / Sair
 const btnOptions = document.getElementById('btn-options');
 if (btnOptions) {
     btnOptions.addEventListener('click', () => {
-        const currentUser = (nickElement ? nickElement.innerText.trim() : 'Jogador');
-        const action = confirm(`⚙️ OPÇÕES DE CONTA\n\nJogador atual: ${currentUser}\n\nDeseja sair da conta e ir para a Tela de Login?`);
+        AudioEngine.play('click');
+        const currentUser = nickElement ? nickElement.innerText.trim() : 'Jogador';
+        const action = confirm(`⚙️ CONFIGURAÇÕES DE CONTA\n\nJogador atual: ${currentUser}\n\nDeseja deslogar e voltar à Tela de Login?`);
         if (action) {
             localStorage.removeItem('ygaming_token');
             window.location.href = 'login.html';
@@ -149,66 +499,68 @@ if (btnOptions) {
     });
 }
 
-const btnRanking = document.getElementById('btn-ranking');
-if (btnRanking) {
-    btnRanking.addEventListener('click', () => {
-        alert('🏆 RANKING GLOBAL (Temporada 1)\n\n1º - CATARINO (2.850 pts)\n2º - SHADOW_BLADE (2.610 pts)\n3º - VALKYRIE (2.420 pts)\n4º - PHOENIX (2.190 pts)\n\nJogue partidas ranqueadas na Arena para subir na tabela!');
+// Fechamento de Modais ao clicar no fundo
+[roomModal, rankingModal, guideModal].forEach(modalEl => {
+    if (modalEl) {
+        modalEl.addEventListener('click', (e) => {
+            if (e.target === modalEl) {
+                AudioEngine.play('click');
+                modalEl.classList.add('hidden');
+            }
+        });
+    }
+});
+
+// Fechar Modal de Salas
+const closeRoomBtn = document.getElementById('close-modal-btn');
+if (closeRoomBtn && roomModal) {
+    closeRoomBtn.addEventListener('click', () => {
+        AudioEngine.play('click');
+        roomModal.classList.add('hidden');
     });
 }
 
-// ==========================================
-// MODAL & MULTIPLAYER EM TEMPO REAL
-// ==========================================
-const modal = document.getElementById('room-modal');
+// Tabs do Modal de Salas
+const tabRooms = document.getElementById('tab-rooms');
+const tabCreate = document.getElementById('tab-create');
 const viewList = document.getElementById('view-room-list');
 const viewCreate = document.getElementById('view-create-room');
-const modalTitle = document.getElementById('modal-main-title');
 
-// Botões do Modal
-const btnPlay = document.getElementById('btn-play');
-if (btnPlay) {
-    btnPlay.onclick = () => {
-        viewCreate.classList.add('hidden');
+function switchModalTab(tab) {
+    AudioEngine.play('click');
+    if (tab === 'rooms') {
+        tabRooms.classList.add('active');
+        tabCreate.classList.remove('active');
         viewList.classList.remove('hidden');
-        modalTitle.innerHTML = '<i class="fas fa-globe"></i> ARENA MULTIPLAYER';
-        modal.classList.remove('hidden');
+        viewCreate.classList.add('hidden');
         carregarSalas();
-    };
+    } else {
+        tabCreate.classList.add('active');
+        tabRooms.classList.remove('active');
+        viewCreate.classList.remove('hidden');
+        viewList.classList.add('hidden');
+    }
 }
 
-const closeBtn = document.getElementById('close-modal-btn');
-if (closeBtn) closeBtn.onclick = () => modal.classList.add('hidden');
+if (tabRooms) tabRooms.addEventListener('click', () => switchModalTab('rooms'));
+if (tabCreate) tabCreate.addEventListener('click', () => switchModalTab('create'));
 
-if (modal) {
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) modal.classList.add('hidden');
+const btnShowCreate = document.getElementById('btn-show-create');
+if (btnShowCreate) btnShowCreate.addEventListener('click', () => switchModalTab('create'));
+
+const btnCancelCreate = document.getElementById('btn-cancel-create');
+if (btnCancelCreate) btnCancelCreate.addEventListener('click', () => switchModalTab('rooms'));
+
+const btnRefreshRooms = document.getElementById('btn-refresh-rooms');
+if (btnRefreshRooms) {
+    btnRefreshRooms.addEventListener('click', () => {
+        AudioEngine.play('click');
+        carregarSalas();
     });
 }
 
-const btnShowCreate = document.getElementById('btn-show-create');
-if (btnShowCreate) {
-    btnShowCreate.onclick = () => {
-        viewList.classList.add('hidden');
-        setTimeout(() => {
-            viewCreate.classList.remove('hidden');
-            modalTitle.innerHTML = '<i class="fas fa-plus-circle"></i> CRIAR NOVA SALA';
-        }, 150);
-    };
-}
-
-const btnCancelCreate = document.getElementById('btn-cancel-create');
-if (btnCancelCreate) {
-    btnCancelCreate.onclick = () => {
-        viewCreate.classList.add('hidden');
-        setTimeout(() => {
-            viewList.classList.remove('hidden');
-            modalTitle.innerHTML = '<i class="fas fa-globe"></i> ARENA MULTIPLAYER';
-        }, 150);
-    };
-}
-
 // ==========================================
-// INTEGRAÇÃO COM SERVIDOR VIA SOCKET.IO
+// 7. MULTIPLAYER EM TEMPO REAL (SOCKET.IO)
 // ==========================================
 let socket = null;
 
@@ -225,7 +577,7 @@ function loadSocketIO(onReady) {
         cdn.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
         cdn.onload = onReady;
         cdn.onerror = () => {
-            console.warn('Socket.io indisponível. Funcionando em modo offline.');
+            console.warn('Socket.io indisponível. Rodando modo offline com bots.');
             carregarSalasOffline();
         };
         document.head.appendChild(cdn);
@@ -239,7 +591,6 @@ loadSocketIO(() => {
         socket = io(url, { reconnectionAttempts: 3, timeout: 4000 });
 
         socket.on('connect', () => {
-            console.log('✅ Conectado ao servidor multiplayer');
             socket.emit('get_rooms');
         });
 
@@ -257,7 +608,7 @@ loadSocketIO(() => {
             }));
 
             if (data.isHost && data.room && data.room.isPrivate) {
-                alert(`🎮 Sala Privada Criada!\nCódigo de Acesso: #${data.code}\nCompartilhe com seus amigos para jogarem juntos!`);
+                alert(`🎮 Sala Privada Criada!\nCódigo: #${data.code}\nCompartilhe com seus amigos!`);
             }
 
             window.location.href = `arena.html?room=${data.code}`;
@@ -266,11 +617,10 @@ loadSocketIO(() => {
         socket.on('join_error', (err) => {
             alert(`❌ ${err.message || 'Erro ao entrar na sala.'}`);
             const btn = document.getElementById('btn-confirm-create');
-            if (btn) btn.innerHTML = 'CRIAR E ENTRAR <i class="fas fa-rocket"></i>';
+            if (btn) btn.innerHTML = '<span>CRIAR E INICIAR</span> <i class="fas fa-rocket"></i>';
         });
 
     } catch (e) {
-        console.warn('Erro ao conectar ao Socket.io:', e);
         carregarSalasOffline();
     }
 });
@@ -284,26 +634,26 @@ function carregarSalas() {
 }
 
 function renderRoomList(rooms) {
-    const roomListContainer = document.getElementById('room-list');
-    if (!roomListContainer) return;
-    roomListContainer.innerHTML = '';
+    const listContainer = document.getElementById('room-list');
+    if (!listContainer) return;
+    listContainer.innerHTML = '';
 
-    // 1. Opção Fixa Sempre Disponível: Treino Solo vs IA Avançada
+    // 1. Opção Fixa: Treino Solo vs IA
     const soloLi = document.createElement('li');
     soloLi.classList.add('room-item');
     soloLi.innerHTML = `
         <div class="room-info">
-            <h4>Batalha Solo (vs IA)</h4>
-            <p><i class="fas fa-robot"></i> 5 Bots com Esquiva e Kiting Tático</p>
+            <h4>Batalha Solo (vs IA Inteligente)</h4>
+            <p><i class="fas fa-robot"></i> 5 Bots com Esquiva e Combate Tático</p>
         </div>
         <div class="room-status">
             <span class="player-count"><i class="fas fa-user-shield"></i> Treino</span>
             <button class="btn-enter-room" onclick="iniciarSolo()">JOGAR</button>
         </div>
     `;
-    roomListContainer.appendChild(soloLi);
+    listContainer.appendChild(soloLi);
 
-    // 2. Salas Públicas do Servidor
+    // 2. Salas Públicas
     if (rooms && rooms.length > 0) {
         rooms.forEach(sala => {
             const li = document.createElement('li');
@@ -323,15 +673,15 @@ function renderRoomList(rooms) {
                     </button>
                 </div>
             `;
-            roomListContainer.appendChild(li);
+            listContainer.appendChild(li);
         });
     }
 }
 
 function carregarSalasOffline() {
     const salasMock = [
-        { nome: "Arena dos Campeões", mapa: "Hexágono Cósmico", jogadores: 3, max: 4, code: "LOS01" },
-        { nome: "Brawl Amigável", mapa: "Abismo Escuro", jogadores: 1, max: 2, code: "LOS02" }
+        { name: "Arena dos Campeões", map: "Hexágono Cósmico", players: 3, max: 4, code: "LOS01" },
+        { name: "Brawl Galáctico", map: "Abismo Escuro", players: 1, max: 2, code: "LOS02" }
     ];
     renderRoomList(salasMock);
 }
@@ -342,10 +692,8 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// ==========================================
-// AÇÕES DE ENTRADA E CRIAÇÃO
-// ==========================================
 window.iniciarSolo = function () {
+    AudioEngine.play('play');
     const playerConfig = getPlayerConfig();
     localStorage.setItem('arenaPlayer', JSON.stringify(playerConfig));
     sessionStorage.setItem('arenaSession', JSON.stringify({ isOnline: false, mode: 'solo' }));
@@ -353,6 +701,7 @@ window.iniciarSolo = function () {
 };
 
 window.entrarNaSala = function (code) {
+    AudioEngine.play('play');
     const playerConfig = getPlayerConfig();
     localStorage.setItem('arenaPlayer', JSON.stringify(playerConfig));
 
@@ -364,34 +713,29 @@ window.entrarNaSala = function (code) {
     }
 };
 
-window.entrarNoJogo = function () {
-    iniciarSolo();
-};
-
-// Entrar por Código
-const codeInput = document.querySelector('.join-code-box input');
-const codeBtn = document.querySelector('.btn-join-code');
-
-if (codeBtn && codeInput) {
-    const triggerJoinCode = () => {
-        const code = codeInput.value.trim().toUpperCase();
+// Entrar com Código
+const inputCode = document.getElementById('input-room-code');
+const btnJoinCode = document.getElementById('btn-join-code');
+if (btnJoinCode && inputCode) {
+    const submitCode = () => {
+        const code = inputCode.value.trim().toUpperCase();
         if (!code) {
-            alert('Por favor, digite o código da sala!');
+            alert('Por favor, informe o código da sala!');
             return;
         }
         entrarNaSala(code);
     };
-
-    codeBtn.onclick = triggerJoinCode;
-    codeInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') triggerJoinCode();
+    btnJoinCode.addEventListener('click', submitCode);
+    inputCode.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') submitCode();
     });
 }
 
-// Criar e Entrar
+// Criar Sala
 const btnConfirmCreate = document.getElementById('btn-confirm-create');
 if (btnConfirmCreate) {
-    btnConfirmCreate.onclick = () => {
+    btnConfirmCreate.addEventListener('click', () => {
+        AudioEngine.play('play');
         const name = document.getElementById('new-room-name').value.trim() || 'Sala Privada';
         const map = document.getElementById('new-room-map').value;
         const players = parseInt(document.getElementById('new-room-players').value) || 4;
@@ -420,13 +764,13 @@ if (btnConfirmCreate) {
                     maxPlayers: players
                 }));
                 window.location.href = 'arena.html';
-            }, 500);
+            }, 400);
         }
-    };
+    });
 }
 
 // ==========================================
-// ORIENTAÇÃO LANDSCAPE OBRIGATÓRIA
+// 8. ORIENTAÇÃO LANDSCAPE OBRIGATÓRIA
 // ==========================================
 function tryLockLandscape() {
     try {
@@ -445,5 +789,6 @@ if (btnRotateFs) {
         else tryLockLandscape();
     });
 }
+
 window.addEventListener('load', tryLockLandscape);
 document.addEventListener('touchstart', tryLockLandscape, { once: true });

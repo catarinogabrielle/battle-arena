@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Battle Arena - Menu Principal</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00d2ff">
@@ -14,123 +14,258 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/logo-los.png">
     <link rel="shortcut icon" type="image/png" href="assets/logo-los.png">
     <link rel="apple-touch-icon" href="assets/logo-los.png">
+
+    <!-- FONTES GAMER MODERNAS (GOOGLE FONTS) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Rajdhani:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- FONT AWESOME & ESTILOS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style-menu.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 
 <body>
+    <!-- FUNDO DINÂMICO & SCANLINES -->
+    <div class="cyber-grid-overlay"></div>
+    <div class="ambient-glow" id="ambient-glow"></div>
+
+    <!-- HUD SUPERIOR DO JOGADOR -->
     <header class="player-hud">
-        <div class="player-identity">
-            <h1 id="player-nickname" contenteditable="true" title="Clique para editar">CATARINO</h1>
-            <span class="level-badge">NÍVEL 15</span>
+        <div class="player-profile-card">
+            <div class="profile-avatar-frame">
+                <img src="assets/kaelen.png" alt="Avatar" id="hud-avatar-img" class="profile-avatar">
+                <div class="online-dot" title="Online"></div>
+            </div>
+            <div class="player-identity">
+                <div class="nickname-row">
+                    <h1 id="player-nickname" contenteditable="true" spellcheck="false" title="Clique para editar seu apelido">CATARINO</h1>
+                    <button class="btn-edit-nick" id="btn-edit-nick" title="Editar nome"><i class="fas fa-pen"></i></button>
+                </div>
+                <div class="player-xp-wrap">
+                    <span class="level-badge" id="hud-level-badge">LVL 15</span>
+                    <div class="xp-bar-track" title="Progresso de nível: 2.450 / 3.000 XP">
+                        <div class="xp-bar-fill" style="width: 72%;"></div>
+                    </div>
+                    <span class="rank-title-badge"><i class="fas fa-crown"></i> ELITE</span>
+                </div>
+            </div>
         </div>
 
-        <div class="player-wallet">
-            <div class="currency coin">
-                <i class="fas fa-coins"></i> 1.250
+        <div class="player-economy-controls">
+            <div class="player-wallet">
+                <div class="currency coin" title="Moedas de Ouro">
+                    <i class="fas fa-coins"></i> <span id="hud-coins">1.250</span>
+                </div>
+                <div class="currency gem" title="Gemas Cósmicas">
+                    <i class="far fa-gem"></i> <span id="hud-gems">45</span>
+                </div>
             </div>
-            <div class="currency gem">
-                <i class="far fa-gem"></i> 45
+
+            <div class="quick-toggles">
+                <button class="icon-toggle-btn" id="btn-toggle-sound" title="Alternar Efeitos Sonoros">
+                    <i class="fas fa-volume-up" id="sound-icon"></i>
+                </button>
+                <button class="icon-toggle-btn" id="btn-toggle-fullscreen" title="Modo Tela Cheia">
+                    <i class="fas fa-expand"></i>
+                </button>
             </div>
         </div>
     </header>
 
+    <!-- ÁREA PRINCIPAL DO JOGO -->
     <main class="cosmos-container">
 
+        <!-- LADO ESQUERDO: SHOWCASE HOLOGRÁFICO DO CAMPEÃO -->
         <section class="character-showcase">
-            <div class="glow-backdrop"></div>
+            <div class="hero-stage">
+                <!-- PEDESTAL HOLOGRÁFICO 3D -->
+                <div class="hologram-pedestal" id="pedestal-ring">
+                    <div class="pedestal-disc"></div>
+                    <div class="pedestal-ring-outer"></div>
+                    <div class="pedestal-ring-inner"></div>
+                    <div class="pedestal-particles"></div>
+                </div>
 
-            <img src="assets/kaelen.png" alt="Personagem" id="main-hero-img" class="hero-render">
-
-            <div class="hero-details">
-                <p class="hero-class" id="main-hero-class">GUERREIRO DO SOL</p>
-                <h2 class="hero-name" id="main-hero-name">KAELEN</h2>
+                <!-- RENDER DO CAMPEÃO COM ANIMAÇÃO -->
+                <img src="assets/kaelen.png" alt="Personagem" id="main-hero-img" class="hero-render">
             </div>
 
-            <div class="character-roster" id="roster-container">
+            <!-- DETALHES & ATRIBUTOS DO PERSONAGEM -->
+            <div class="hero-info-card" id="hero-info-card">
+                <div class="hero-badge-row">
+                    <span class="hero-role-tag" id="main-hero-role"><i class="fas fa-shield-alt"></i> COMBATENTE</span>
+                    <span class="hero-weapon-tag" id="main-hero-weapon-type"><i class="fas fa-fist-raised"></i> CORPO A CORPO</span>
+                </div>
+
+                <div class="hero-title-box">
+                    <h2 class="hero-name" id="main-hero-name">KAELEN</h2>
+                    <p class="hero-class" id="main-hero-class">GUERREIRO DO SOL</p>
+                </div>
+
+                <!-- BARRAS DE STATUS DO CAMPEÃO -->
+                <div class="hero-stats-grid">
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fas fa-bolt"></i> DANO</span>
+                        <div class="stat-bar-track">
+                            <div class="stat-bar-fill" id="stat-dano" style="width: 85%;"></div>
+                        </div>
+                        <span class="stat-num" id="stat-num-dano">85</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fas fa-shield-virus"></i> DEFESA</span>
+                        <div class="stat-bar-track">
+                            <div class="stat-bar-fill" id="stat-defesa" style="width: 80%;"></div>
+                        </div>
+                        <span class="stat-num" id="stat-num-defesa">80</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fas fa-running"></i> AGILIDADE</span>
+                        <div class="stat-bar-track">
+                            <div class="stat-bar-fill" id="stat-velocidade" style="width: 70%;"></div>
+                        </div>
+                        <span class="stat-num" id="stat-num-velocidade">70</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fas fa-crosshairs"></i> ALCANCE</span>
+                        <div class="stat-bar-track">
+                            <div class="stat-bar-fill" id="stat-alcance" style="width: 35%;"></div>
+                        </div>
+                        <span class="stat-num" id="stat-num-alcance">35</span>
+                    </div>
+                </div>
+
+                <div class="hero-weapon-desc" id="main-hero-weapon-desc">
+                    <i class="fas fa-wand-magic-sparkles"></i> <span><strong>Espada Solar:</strong> Golpes devastadores de plasma radiante.</span>
+                </div>
+            </div>
+
+            <!-- SELETOR DOCK DE CAMPEÕES (ROSTER) -->
+            <div class="character-roster-wrap">
+                <span class="roster-heading">SELECIONE SEU HERÓI</span>
+                <div class="character-roster" id="roster-container">
+                    <!-- Gerado dinamicamente via JS -->
+                </div>
             </div>
         </section>
 
+        <!-- LADO DIREITO: AÇÕES, MODO E BOTÃO JOGAR -->
         <section class="action-nexus">
+            <!-- MODO ATUAL DE JOGO -->
+            <div class="game-mode-card" id="mode-card">
+                <div class="mode-badge-live"><span class="live-dot"></span> TEMPORADA 1</div>
+                <div class="mode-body">
+                    <div class="mode-icon"><i class="fas fa-meteor"></i></div>
+                    <div class="mode-text">
+                        <span class="mode-subtitle">MODO COMPETITIVO</span>
+                        <h3 class="mode-title">BATTLE ROYALE</h3>
+                        <p class="mode-desc">Hexágono Cósmico &bull; Tempestade Progressiva</p>
+                    </div>
+                </div>
+            </div>
 
+            <!-- BOTÃO MASSIVO DE ENTRAR NA ARENA -->
             <button class="btn-massive-play" id="btn-play">
+                <div class="btn-play-sheen"></div>
+                <div class="btn-play-glow"></div>
                 <div class="play-content">
                     <span class="play-title">ENTRAR NA ARENA</span>
-                    <span class="play-subtitle">Procurar sala online</span>
+                    <span class="play-subtitle">SOLO VS IA OU MULTIPLAYER ONLINE</span>
                 </div>
-                <i class="fas fa-play play-icon"></i>
+                <div class="play-icon-box">
+                    <i class="fas fa-play play-icon"></i>
+                </div>
             </button>
 
-            <div class="floating-menu">
-                <button class="orb-btn" id="btn-install-pwa" title="Instalar aplicativo Battle Arena">
-                    <div class="orb-icon"><i class="fas fa-download"></i></div>
+            <!-- DOCK DE BOTÕES SECUNDÁRIOS -->
+            <div class="action-dock">
+                <button class="dock-btn" id="btn-install-pwa" title="Instalar aplicativo PWA">
+                    <div class="dock-icon"><i class="fas fa-download"></i></div>
                     <span>Instalar App</span>
                 </button>
 
-                <button class="orb-btn" id="btn-ranking" title="Ranking">
-                    <div class="orb-icon"><i class="fas fa-trophy"></i></div>
+                <button class="dock-btn" id="btn-ranking" title="Ver Ranking Global">
+                    <div class="dock-icon"><i class="fas fa-trophy"></i></div>
                     <span>Ranking</span>
                 </button>
 
-                <button class="orb-btn" id="btn-options" title="Opções / Trocar Conta">
-                    <div class="orb-icon"><i class="fas fa-cog"></i></div>
+                <button class="dock-btn" id="btn-guide" title="Guia de Combate e Controles">
+                    <div class="dock-icon"><i class="fas fa-gamepad"></i></div>
+                    <span>Controles</span>
+                </button>
+
+                <button class="dock-btn" id="btn-options" title="Opções de Conta e Sair">
+                    <div class="dock-icon"><i class="fas fa-cog"></i></div>
                     <span>Opções</span>
                 </button>
             </div>
-
         </section>
 
     </main>
 
+    <!-- MODAL DE MULTIPLAYER & SALAS -->
     <div id="room-modal" class="modal-overlay hidden">
         <div class="modal-content">
-            <button class="close-btn" id="close-modal-btn"><i class="fas fa-times"></i></button>
+            <button class="close-btn" id="close-modal-btn" aria-label="Fechar"><i class="fas fa-times"></i></button>
 
-            <h2 class="modal-title" id="modal-main-title"><i class="fas fa-globe"></i> ARENA MULTIPLAYER</h2>
+            <div class="modal-header-tabs">
+                <button class="modal-tab active" id="tab-rooms"><i class="fas fa-globe"></i> SALAS ABERTAS</button>
+                <button class="modal-tab" id="tab-create"><i class="fas fa-plus-circle"></i> CRIAR SALA</button>
+            </div>
 
+            <!-- VIEW: LISTA DE SALAS -->
             <div id="view-room-list" class="modal-view">
-                <div class="modal-actions">
-                    <button class="btn-create-room" id="btn-show-create"><i class="fas fa-plus"></i> CRIAR NOVA
-                        SALA</button>
-
+                <div class="modal-actions-bar">
                     <div class="join-code-box">
-                        <input type="text" placeholder="Código da sala..." maxlength="6">
-                        <button class="btn-join-code"><i class="fas fa-sign-in-alt"></i></button>
+                        <i class="fas fa-key code-icon"></i>
+                        <input type="text" placeholder="Código (Ex: LOS01)..." maxlength="6" id="input-room-code">
+                        <button class="btn-join-code" id="btn-join-code" title="Entrar com código">
+                            <span>ENTRAR</span> <i class="fas fa-arrow-right"></i>
+                        </button>
                     </div>
+
+                    <button class="btn-open-create" id="btn-show-create">
+                        <i class="fas fa-plus"></i> NOVA SALA
+                    </button>
                 </div>
 
-                <div class="public-rooms">
-                    <h3>SALAS PÚBLICAS ABERTAS</h3>
+                <div class="public-rooms-section">
+                    <div class="section-title-row">
+                        <h3>SALAS PÚBLICAS DISPONÍVEIS</h3>
+                        <span class="refresh-indicator" id="btn-refresh-rooms" title="Atualizar salas">
+                            <i class="fas fa-sync-alt"></i> Atualizar
+                        </span>
+                    </div>
                     <ul class="room-list" id="room-list">
+                        <!-- Gerado dinamicamente via JS -->
                     </ul>
                 </div>
             </div>
 
+            <!-- VIEW: CRIAR SALA -->
             <div id="view-create-room" class="modal-view hidden">
                 <div class="create-form">
-
                     <div class="form-group">
-                        <label>Nome da Sala</label>
-                        <input type="text" id="new-room-name" placeholder="Ex: Treino da Galera..."
-                            value="Sala Privada">
+                        <label><i class="fas fa-tag"></i> Nome da Sala</label>
+                        <input type="text" id="new-room-name" placeholder="Ex: Arena dos Campeões..." value="Sala Privada">
                     </div>
 
                     <div class="form-row">
                         <div class="form-group flex-1">
-                            <label>Selecionar Mapa</label>
+                            <label><i class="fas fa-map"></i> Mapa</label>
                             <select id="new-room-map">
-                                <option value="Hexágono Cósmico">Hexágono Cósmico</option>
-                                <option value="Abismo Escuro">Abismo Escuro</option>
-                                <option value="Ruínas Antigas">Ruínas Antigas</option>
+                                <option value="Hexágono Cósmico">Hexágono Cósmico (Padrão)</option>
+                                <option value="Abismo Escuro">Abismo Escuro (Dificuldade Alta)</option>
+                                <option value="Ruínas Antigas">Ruínas Antigas (Obstáculos)</option>
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <label>Máx. Jogadores</label>
+                            <label><i class="fas fa-users"></i> Capacidade</label>
                             <select id="new-room-players">
-                                <option value="2">2 Jogadores</option>
-                                <option value="4" selected>4 Jogadores</option>
-                                <option value="8">8 Jogadores</option>
+                                <option value="2">2 Combatentes (1v1)</option>
+                                <option value="4" selected>4 Combatentes (Padrão)</option>
+                                <option value="8">8 Combatentes (Battle Royale)</option>
                             </select>
                         </div>
                     </div>
@@ -140,17 +275,136 @@
                             <input type="checkbox" id="new-room-private">
                             <span class="slider"></span>
                         </label>
-                        <span class="toggle-label"><i class="fas fa-lock"></i> Sala Privada (Gerar Código)</span>
+                        <span class="toggle-label"><i class="fas fa-lock"></i> Sala Privada com Código de Acesso</span>
                     </div>
 
                     <div class="create-actions">
-                        <button class="btn-secondary" id="btn-cancel-create">CANCELAR</button>
-                        <button class="btn-primary" id="btn-confirm-create">CRIAR E ENTRAR <i
-                                class="fas fa-rocket"></i></button>
+                        <button class="btn-secondary" id="btn-cancel-create">VOLTAR</button>
+                        <button class="btn-primary" id="btn-confirm-create">
+                            <span>CRIAR E INICIAR</span> <i class="fas fa-rocket"></i>
+                        </button>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
+    <!-- MODAL DE RANKING GLOBAL -->
+    <div id="ranking-modal" class="modal-overlay hidden">
+        <div class="modal-content ranking-modal-content">
+            <button class="close-btn" id="close-ranking-btn" aria-label="Fechar"><i class="fas fa-times"></i></button>
+            <h2 class="modal-title"><i class="fas fa-trophy" style="color: #ffd700;"></i> RANKING GLOBAL</h2>
+            <p class="ranking-subtitle">Temporada 1: Despertar dos Titãs Cósmicos</p>
+
+            <div class="ranking-podium">
+                <div class="podium-card silver">
+                    <div class="podium-rank">2º</div>
+                    <div class="podium-avatar"><img src="assets/elara.png" alt="2º Lugar"></div>
+                    <div class="podium-name">SHADOW_99</div>
+                    <div class="podium-pts">2.610 PTS</div>
+                </div>
+                <div class="podium-card gold">
+                    <div class="crown-icon"><i class="fas fa-crown"></i></div>
+                    <div class="podium-rank">1º</div>
+                    <div class="podium-avatar"><img src="assets/kaelen.png" alt="1º Lugar"></div>
+                    <div class="podium-name" id="rank-top1-name">CATARINO</div>
+                    <div class="podium-pts">2.850 PTS</div>
+                </div>
+                <div class="podium-card bronze">
+                    <div class="podium-rank">3º</div>
+                    <div class="podium-avatar"><img src="assets/malacor.png" alt="3º Lugar"></div>
+                    <div class="podium-name">VALKYRIE_X</div>
+                    <div class="podium-pts">2.420 PTS</div>
+                </div>
+            </div>
+
+            <div class="ranking-table-wrap">
+                <table class="ranking-table">
+                    <thead>
+                        <tr>
+                            <th>POS</th>
+                            <th>JOGADOR</th>
+                            <th>HERÓI</th>
+                            <th>VITÓRIAS</th>
+                            <th>PONTOS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="current-user-row">
+                            <td>#1</td>
+                            <td><strong id="rank-user-name">CATARINO (VOCÊ)</strong></td>
+                            <td>KAELEN</td>
+                            <td>42</td>
+                            <td class="pts-cell">2.850</td>
+                        </tr>
+                        <tr>
+                            <td>#2</td>
+                            <td>SHADOW_99</td>
+                            <td>ELARA</td>
+                            <td>38</td>
+                            <td class="pts-cell">2.610</td>
+                        </tr>
+                        <tr>
+                            <td>#3</td>
+                            <td>VALKYRIE_X</td>
+                            <td>MALACOR</td>
+                            <td>35</td>
+                            <td class="pts-cell">2.420</td>
+                        </tr>
+                        <tr>
+                            <td>#4</td>
+                            <td>PHOENIX_BR</td>
+                            <td>MORWEN</td>
+                            <td>31</td>
+                            <td class="pts-cell">2.190</td>
+                        </tr>
+                        <tr>
+                            <td>#5</td>
+                            <td>GHOST_STRIKE</td>
+                            <td>SILAS</td>
+                            <td>28</td>
+                            <td class="pts-cell">2.050</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE GUIA E CONTROLES -->
+    <div id="guide-modal" class="modal-overlay hidden">
+        <div class="modal-content guide-modal-content">
+            <button class="close-btn" id="close-guide-btn" aria-label="Fechar"><i class="fas fa-times"></i></button>
+            <h2 class="modal-title"><i class="fas fa-gamepad" style="color: #00d2ff;"></i> GUIA DE CONTROLES</h2>
+
+            <div class="guide-grid">
+                <div class="guide-card">
+                    <div class="guide-card-header"><i class="fas fa-keyboard"></i> COMPUTADOR / TECLADO</div>
+                    <ul class="guide-list">
+                        <li><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> : Mover personagem em 360°</li>
+                        <li><kbd>ESPAÇO</kbd> : Correr (Sprint com gasto de estamina)</li>
+                        <li><kbd>MOUSE</kbd> : Mirar direção dos golpes/tiros</li>
+                        <li><kbd>CLIQUE ESQUERDO</kbd> : Atacar / Disparar</li>
+                    </ul>
+                </div>
+
+                <div class="guide-card">
+                    <div class="guide-card-header"><i class="fas fa-mobile-alt"></i> CELULAR / TOUCH</div>
+                    <ul class="guide-list">
+                        <li><strong>Polegar Esquerdo:</strong> Joystick analógico flutuante</li>
+                        <li><strong>Botão de Corrida (Ícone Corredor):</strong> Sprint acelerado</li>
+                        <li><strong>Botão de Mira/Ataque (Alvo):</strong> Dispara na direção</li>
+                        <li><strong>Modo Obrigatório:</strong> Sempre jogue na horizontal</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-tips-box">
+                <h4><i class="fas fa-lightbulb"></i> DICAS PARA VENCER NA ARENA:</h4>
+                <p>&bull; Fique atento à tempestade cósmica (zona vermelha) que encolhe a arena.</p>
+                <p>&bull; Administre sua munição/estamina: recarregar no meio do combate te deixa vulnerável.</p>
+                <p>&bull; Campeões corpo a corpo causam mais dano; campeões à distância controlam o espaço.</p>
+            </div>
         </div>
     </div>
 

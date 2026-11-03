@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Battle Arena - Login</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00d2ff">
@@ -14,35 +14,51 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/logo-los.png">
     <link rel="shortcut icon" type="image/png" href="assets/logo-los.png">
     <link rel="apple-touch-icon" href="assets/logo-los.png">
+
+    <!-- FONTES GAMER MODERNAS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Rajdhani:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style-login.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         #login-error {
-            color: #ff3d68;
-            font-size: 0.9em;
+            color: #ff3366;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95em;
             text-align: center;
             margin-top: 15px;
-            font-weight: bold;
+            font-weight: 700;
             display: none;
-            background: rgba(255, 61, 104, 0.1);
+            background: rgba(255, 51, 102, 0.12);
             padding: 10px;
             border-radius: 8px;
-            border: 1px solid #ff3d68;
+            border: 1px solid #ff3366;
+            letter-spacing: 0.5px;
         }
     </style>
 </head>
 
 <body>
+    <!-- SCANLINES CYBERNETICAS -->
+    <div class="cyber-scanlines"></div>
+
     <div class="login-container">
         <div class="game-logo">
             <img src="assets/logo-los.png" alt="Last One Standing Logo">
         </div>
 
         <div class="login-panel" id="main-panel">
+            <div class="panel-header">
+                <h2>ACESSO À ARENA</h2>
+                <p>Identifique seu combatente para conectar</p>
+            </div>
+
             <form id="login-form">
                 <div class="input-group">
                     <i class="fas fa-envelope input-icon"></i>
-                    <input type="email" id="email" placeholder="name@example.com" required autocomplete="email">
+                    <input type="email" id="email" placeholder="combatente@los.arena" required autocomplete="email">
                 </div>
 
                 <div class="input-group">
@@ -51,7 +67,7 @@
                 </div>
 
                 <button type="submit" class="login-button" id="btn-submit">
-                    LOGIN <i class="fas fa-chevron-right button-arrow"></i>
+                    <span>CONECTAR</span> <i class="fas fa-arrow-right button-arrow"></i>
                 </button>
 
                 <div id="login-error">Erro ao conectar!</div>
@@ -79,7 +95,7 @@
             const errorDiv = document.getElementById('login-error');
 
             errorDiv.style.display = 'none';
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> AUTENTICANDO...';
+            btn.innerHTML = '<span>AUTENTICANDO...</span> <i class="fas fa-spinner fa-spin button-arrow"></i>';
             btn.disabled = true;
 
             setTimeout(() => {
@@ -100,13 +116,13 @@
                 existingPlayer.nickname = defaultName;
                 localStorage.setItem('arenaPlayer', JSON.stringify(existingPlayer));
 
-                btn.innerHTML = '<i class="fas fa-check"></i> CONECTADO!';
+                btn.innerHTML = '<span>CONECTADO!</span> <i class="fas fa-check button-arrow"></i>';
 
                 setTimeout(() => {
                     window.location.href = 'menu.html';
-                }, 400);
+                }, 350);
 
-            }, 600);
+            }, 500);
         });
     </script>
 </body>
