@@ -59,6 +59,10 @@
                     </div>
                 </div>
             </div>
+
+            <button id="btn-skip-loading" class="btn-skip-loading">
+                PULAR GUIA / INICIAR IMEDIATAMENTE <i class="fas fa-forward"></i>
+            </button>
         </div>
 
         <div class="loading-bottom-wrapper">
@@ -81,6 +85,9 @@
         <button class="btn-leave" onclick="window.location.href='menu.html'">
             <i class="fas fa-sign-out-alt"></i> SAIR
         </button>
+        <div class="hud-mode-badge" id="hud-mode-badge">
+            <i class="fas fa-globe"></i> ONLINE
+        </div>
         <div class="hud-zone">
             <i class="fas fa-radiation-alt" style="color: #ff3d68;"></i> ZONA ATIVA
         </div>
@@ -96,8 +103,8 @@
     <footer class="hud-bottom" id="player-hud">
         <div class="player-panel">
             <div class="panel-header">
-                <span id="player-name-hud">KAELEN_BR</span>
-                <span id="hud-weapon-name">ESPADA LENDÁRIA</span>
+                <span id="player-name-hud">JOGADOR</span>
+                <span id="hud-weapon-name">ARMA</span>
             </div>
 
             <div class="hp-bar-bg">
@@ -128,12 +135,20 @@
         </div>
 
         <div class="end-actions">
-            <button class="btn-play-again" onclick="window.location.reload()"><i class="fas fa-redo"></i> JOGAR
-                NOVAMENTE</button>
+            <button class="btn-play-again" onclick="window.location.reload()"><i class="fas fa-redo"></i> JOGAR NOVAMENTE</button>
             <button class="btn-menu" onclick="window.location.href='menu.html'">MENU</button>
         </div>
     </div>
 
+    <!-- Scripts -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        if (typeof io === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
+            document.head.appendChild(script);
+        }
+    </script>
     <script src="script-arena.js"></script>
 </body>
 
