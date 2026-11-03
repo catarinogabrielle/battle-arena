@@ -1,6 +1,25 @@
 {
-  "cleanUrls": false,
-  "rewrites": [
-    { "source": "/", "destination": "/menu.html" }
+  "version": 2,
+  "functions": {
+    "server.js": {
+      "includeFiles": "{assets/**,*.css,*.js,*.html,*.json,favicon.ico}"
+    }
+  },
+  "routes": [
+    { "src": "/assets/(.*)", "dest": "/assets/$1" },
+    { "src": "/style-menu.css", "dest": "/style-menu.css" },
+    { "src": "/style-arena.css", "dest": "/style-arena.css" },
+    { "src": "/style-login.css", "dest": "/style-login.css" },
+    { "src": "/script-menu.js", "dest": "/script-menu.js" },
+    { "src": "/script-arena.js", "dest": "/script-arena.js" },
+    { "src": "/manifest.json", "dest": "/manifest.json" },
+    { "src": "/service-worker.js", "dest": "/service-worker.js" },
+    { "src": "/favicon.ico", "dest": "/favicon.ico" },
+    { "src": "/arena.html", "dest": "/arena.html" },
+    { "src": "/login.html", "dest": "/login.html" },
+    { "src": "/menu.html", "dest": "/menu.html" },
+    { "src": "/index.html", "dest": "/menu.html" },
+    { "src": "/", "dest": "server.js" },
+    { "src": "/(.*)", "dest": "server.js" }
   ]
 }

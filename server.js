@@ -14,13 +14,24 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
-// Servir arquivos estáticos do jogo da raiz do projeto
-const staticRoot = path.join(__dirname, '..');
-app.use(express.static(staticRoot));
+// Servir arquivos estáticos do jogo
+app.use(express.static(__dirname));
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(staticRoot, 'menu.html'));
-});
+// Rotas explícitas para garantir carregamento estático em Serverless (Vercel)
+app.get('/style-menu.css', (req, res) => res.sendFile(path.join(__dirname, 'style-menu.css')));
+app.get('/style-arena.css', (req, res) => res.sendFile(path.join(__dirname, 'style-arena.css')));
+app.get('/style-login.css', (req, res) => res.sendFile(path.join(__dirname, 'style-login.css')));
+app.get('/script-menu.js', (req, res) => res.sendFile(path.join(__dirname, 'script-menu.js')));
+app.get('/script-arena.js', (req, res) => res.sendFile(path.join(__dirname, 'script-arena.js')));
+app.get('/manifest.json', (req, res) => res.sendFile(path.join(__dirname, 'manifest.json')));
+app.get('/service-worker.js', (req, res) => res.sendFile(path.join(__dirname, 'service-worker.js')));
+app.get('/favicon.ico', (req, res) => res.sendFile(path.join(__dirname, 'favicon.ico')));
+app.get('/assets/:file', (req, res) => res.sendFile(path.join(__dirname, 'assets', req.params.file)));
+app.get('/menu.html', (req, res) => res.sendFile(path.join(__dirname, 'menu.html')));
+app.get('/arena.html', (req, res) => res.sendFile(path.join(__dirname, 'arena.html')));
+app.get('/login.html', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'menu.html')));
 
 // ========================================================
 // GERENCIADOR DE SALAS E MULTIPLAYER AUTORITATIVO
@@ -798,9 +809,13 @@ function getRoomPublicData(room) {
     };
 }
 
-server.listen(PORT, () => {
-    console.log(`===============================================`);
-    console.log(`⚔️ BATTLE ARENA SERVER RODANDO NA PORTA ${PORT}`);
-    console.log(`👉 Acesse no navegador: http://localhost:${PORT}`);
-    console.log(`===============================================`);
-});
+if (require.main === module || !process.env.VERCEL) {
+    server.listen(PORT, () => {
+        console.log(`===============================================`);
+        console.log(`⚔️ BATTLE ARENA SERVER RODANDO NA PORTA ${PORT}`);
+        console.log(`👉 Acesse no navegador: http://localhost:${PORT}`);
+        console.log(`===============================================`);
+    });
+}
+
+module.exports = app;
