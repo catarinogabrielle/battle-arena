@@ -14,11 +14,12 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
-// Servir arquivos estáticos do jogo
-app.use(express.static(path.join(__dirname)));
+// Servir arquivos estáticos do jogo da raiz do projeto
+const staticRoot = path.join(__dirname, '..');
+app.use(express.static(staticRoot));
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'menu.html'));
+    res.sendFile(path.join(staticRoot, 'menu.html'));
 });
 
 // ========================================================

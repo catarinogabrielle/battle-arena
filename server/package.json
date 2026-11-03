@@ -1,11 +1,11 @@
 {
-  "name": "battle-arena-last-one-standing",
+  "name": "battle-arena-server",
   "version": "1.1.0",
-  "description": "Battle Arena: Last One Standing - Multiplayer Realtime & Advanced AI",
+  "description": "Battle Arena: Last One Standing - Multiplayer Realtime Backend & AI Server",
+  "main": "server.js",
   "scripts": {
-    "build": "echo Static build ready",
-    "start": "node _server.js",
-    "dev": "node _server.js"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "keywords": [
     "battle-royale",
