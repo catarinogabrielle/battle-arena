@@ -1179,3 +1179,26 @@ const CountdownManager = {
 
 // Inicia carregamento
 window.onload = () => LoadingManager.start();
+
+// ==========================================
+// ORIENTAÇÃO LANDSCAPE OBRIGATÓRIA
+// ==========================================
+function tryLockLandscape() {
+    try {
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {});
+        }
+    } catch (e) {}
+}
+
+const btnRotateFs = document.getElementById('btn-fullscreen-rotate');
+if (btnRotateFs) {
+    btnRotateFs.addEventListener('click', () => {
+        const doc = document.documentElement;
+        if (doc.requestFullscreen) doc.requestFullscreen().then(tryLockLandscape).catch(tryLockLandscape);
+        else if (doc.webkitRequestFullscreen) { doc.webkitRequestFullscreen(); tryLockLandscape(); }
+        else tryLockLandscape();
+    });
+}
+window.addEventListener('load', tryLockLandscape);
+document.addEventListener('touchstart', tryLockLandscape, { once: true });

@@ -860,6 +860,10 @@ canvas {
     transform: scale(0.92);
 }
 
+/* ======================================================== */
+/* DESIGN RESPONSIVO - MODO PAISAGEM / HORIZONTAL OBRIGATÓRIO*/
+/* ======================================================== */
+
 @media (hover: none) and (pointer: coarse) {
     .mobile-controls-layer {
         display: block;
@@ -869,58 +873,304 @@ canvas {
     }
 }
 
-@media (max-width: 768px) {
+@media (orientation: landscape) and (max-height: 550px) {
     .hud-top {
-        padding: 10px 15px;
+        padding: 6px 18px;
     }
     .btn-leave {
-        padding: 6px 12px;
-        font-size: 0.85em;
+        padding: 4px 10px;
+        font-size: 0.8em;
     }
     .hud-zone {
-        font-size: 0.9em;
+        font-size: 0.82em;
     }
     .hud-alive {
-        padding: 6px 12px;
-        font-size: 0.9em;
-    }
-    .hud-bottom {
-        bottom: 15px;
-    }
-    .player-panel {
-        padding: 10px 15px;
-        width: 92vw;
-        max-width: 320px;
-    }
-    .tutorial-title {
-        font-size: 1.8em;
-        letter-spacing: 3px;
-    }
-    .tutorial-panels {
-        flex-direction: column;
-        gap: 15px;
-        align-items: center;
-    }
-    .tutorial-box {
-        width: 90vw;
-        max-width: 340px;
-        padding: 20px;
-    }
-    .box-header {
-        font-size: 1.2em;
-        margin-bottom: 15px;
-    }
-    #loading-screen {
-        padding: 15px 10px;
-    }
-    .tutorial-wrapper {
-        gap: 20px;
-        max-height: 80vh;
-        overflow-y: auto;
+        padding: 4px 10px;
+        font-size: 0.82em;
     }
     .kill-feed {
-        top: 60px;
+        top: 46px;
         right: 15px;
-        width: 220px;
+        width: 190px;
+        font-size: 0.75em;
     }
+
+    /* Painel do Jogador centralizado no rodapé */
+    .hud-bottom {
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    .player-panel {
+        padding: 6px 14px;
+        width: auto;
+        min-width: 200px;
+        max-width: 260px;
+        border-radius: 12px;
+    }
+    .bar-wrap {
+        height: 7px;
+    }
+    .stat-label {
+        font-size: 0.7em;
+        margin-bottom: 2px;
+    }
+    .ammo-pip {
+        width: 14px;
+        height: 14px;
+    }
+
+    /* Controles Touch Mobile para Paisagem */
+    .joystick-zone {
+        bottom: 18px;
+        left: 20px;
+        width: 120px;
+        height: 120px;
+    }
+    .joystick-stick {
+        width: 48px;
+        height: 48px;
+    }
+    .touch-action-buttons {
+        bottom: 18px;
+        right: 20px;
+        gap: 10px;
+    }
+    .touch-btn.btn-sprint {
+        width: 50px;
+        height: 50px;
+        font-size: 1em;
+        margin-bottom: 8px;
+        margin-right: 10px;
+    }
+    .touch-btn.btn-attack {
+        width: 70px;
+        height: 70px;
+        font-size: 1.3em;
+    }
+
+    /* Tela de Carregamento e Tutorial */
+    #loading-screen {
+        padding: 10px;
+    }
+    .tutorial-wrapper {
+        gap: 10px;
+        max-height: 85vh;
+        max-height: 85dvh;
+    }
+    .tutorial-title {
+        font-size: 1.35em;
+        letter-spacing: 2px;
+        margin-bottom: 2px;
+    }
+    .tutorial-panels {
+        flex-direction: row !important;
+        gap: 12px;
+        align-items: stretch;
+        justify-content: center;
+    }
+    .tutorial-box {
+        width: 220px;
+        max-width: 42vw;
+        padding: 10px 12px;
+    }
+    .box-header {
+        font-size: 0.95em;
+        margin-bottom: 8px;
+    }
+    .keyboard-layout {
+        gap: 8px;
+    }
+    .key {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75em;
+        border-radius: 4px;
+    }
+    .key.spacebar {
+        height: 24px;
+        font-size: 0.7em;
+    }
+    .key-desc {
+        font-size: 0.65em;
+        margin-top: 2px;
+    }
+    .css-mouse {
+        width: 24px;
+        height: 38px;
+    }
+    .desc-item .highlight-text {
+        font-size: 0.8em;
+    }
+    .desc-item .sub-text {
+        font-size: 0.65em;
+    }
+    .loading-bottom-wrapper {
+        margin-top: 8px;
+    }
+    .loading-bar-container {
+        height: 8px;
+        max-width: 320px;
+    }
+    .loading-text {
+        font-size: 0.8em;
+        margin-top: 4px;
+    }
+
+    /* Modal Fim de Jogo */
+    .game-over-box {
+        padding: 20px 25px;
+        max-height: 90vh;
+        max-width: 440px;
+    }
+    .victory-title {
+        font-size: 2em;
+    }
+    .defeated-title {
+        font-size: 2em;
+    }
+}
+
+/* ======================================================== */
+/* BLOQUEADOR GLOBAL DE MODO RETRATO (FORÇAR HORIZONTAL)    */
+/* ======================================================== */
+.rotate-screen-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: radial-gradient(circle at center, #0a1329 0%, #030611 100%);
+    z-index: 9999999;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+@media (orientation: portrait) {
+    .rotate-screen-overlay {
+        display: flex !important;
+    }
+}
+
+.rotate-screen-box {
+    max-width: 360px;
+    background: rgba(10, 18, 35, 0.96);
+    border: 2px solid rgba(0, 210, 255, 0.45);
+    box-shadow: 0 0 50px rgba(0, 210, 255, 0.3), inset 0 0 25px rgba(0, 210, 255, 0.1);
+    border-radius: 20px;
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    animation: rotateCardFadeIn 0.4s ease-out;
+}
+
+@keyframes rotateCardFadeIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.rotate-animation {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.rotate-animation .phone-icon {
+    font-size: 50px;
+    color: #00d2ff;
+    filter: drop-shadow(0 0 15px rgba(0, 210, 255, 0.8));
+    animation: rotatePhone 2.2s ease-in-out infinite;
+    transform-origin: center center;
+}
+
+.rotate-animation .turn-arrow {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    font-size: 24px;
+    color: #00ff88;
+    animation: pulseTurn 2.2s infinite;
+}
+
+@keyframes rotatePhone {
+    0%, 20% {
+        transform: rotate(0deg);
+    }
+    50%, 80% {
+        transform: rotate(-90deg);
+    }
+    100% {
+        transform: rotate(0deg);
+    }
+}
+
+@keyframes pulseTurn {
+    0%, 100% { opacity: 0.3; transform: scale(0.85); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+.rotate-screen-box h2 {
+    color: #ffffff;
+    font-size: 1.35em;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(0, 210, 255, 0.6);
+    margin: 0;
+}
+
+.rotate-screen-box p {
+    color: #a0aec0;
+    font-size: 0.92em;
+    line-height: 1.45;
+    margin: 0;
+}
+
+.rotate-screen-box p strong {
+    color: #00d2ff;
+}
+
+.rotate-badge {
+    background: rgba(0, 210, 255, 0.15);
+    border: 1px solid #00d2ff;
+    color: #00d2ff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.82em;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-rotate-fullscreen {
+    margin-top: 5px;
+    background: linear-gradient(90deg, #00d2ff 0%, #00ff88 100%);
+    color: #050b14;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 0.88em;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s;
+}
+
+.btn-rotate-fullscreen:hover {
+    transform: scale(1.04);
+    box-shadow: 0 0 20px rgba(0, 210, 255, 0.6);
 }

@@ -101,7 +101,46 @@
         </div>
     </div>
 
+    <!-- BLOQUEADOR DE ORIENTAÇÃO: OBRIGATÓRIO MODO PAISAGEM / HORIZONTAL -->
+    <div id="rotate-screen-overlay" class="rotate-screen-overlay">
+        <div class="rotate-screen-box">
+            <div class="rotate-animation">
+                <i class="fas fa-mobile-alt phone-icon"></i>
+                <i class="fas fa-undo-alt turn-arrow"></i>
+            </div>
+            <h2>GIRE SEU APARELHO</h2>
+            <p>Battle Arena foi criado para ser jogado <strong>exclusivamente na horizontal</strong> (Modo Paisagem).</p>
+            <div class="rotate-badge">
+                <i class="fas fa-arrows-alt-h"></i> MODO PAISAGEM
+            </div>
+            <button id="btn-fullscreen-rotate" class="btn-rotate-fullscreen">
+                <i class="fas fa-expand"></i> ATIVAR TELA CHEIA
+            </button>
+        </div>
+    </div>
+
     <script>
+        // Tenta bloquear em modo Paisagem (Landscape)
+        function tryLockLandscape() {
+            try {
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('landscape').catch(() => {});
+                }
+            } catch (e) {}
+        }
+
+        const btnRotateFs = document.getElementById('btn-fullscreen-rotate');
+        if (btnRotateFs) {
+            btnRotateFs.addEventListener('click', () => {
+                const doc = document.documentElement;
+                if (doc.requestFullscreen) doc.requestFullscreen().then(tryLockLandscape).catch(tryLockLandscape);
+                else if (doc.webkitRequestFullscreen) { doc.webkitRequestFullscreen(); tryLockLandscape(); }
+                else tryLockLandscape();
+            });
+        }
+        window.addEventListener('load', tryLockLandscape);
+        document.addEventListener('touchstart', tryLockLandscape, { once: true });
+
         // Registro do Service Worker PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
