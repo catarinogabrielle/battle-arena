@@ -22,59 +22,61 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style-login.css">
-    <style>
-        #login-error {
-            color: #ff3366;
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 0.95em;
-            text-align: center;
-            margin-top: 15px;
-            font-weight: 700;
-            display: none;
-            background: rgba(255, 51, 102, 0.12);
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ff3366;
-            letter-spacing: 0.5px;
-        }
-    </style>
 </head>
 
 <body>
-    <!-- SCANLINES CYBERNETICAS -->
-    <div class="cyber-scanlines"></div>
-
     <div class="login-container">
+        <!-- LOGO OFICIAL -->
         <div class="game-logo">
             <img src="assets/logo-los.png" alt="Last One Standing Logo">
         </div>
 
         <div class="login-panel" id="main-panel">
-            <div class="panel-header">
-                <h2>ACESSO À ARENA</h2>
-                <p>Identifique seu combatente para conectar</p>
+            <!-- CASO 1: SESSÃO EXISTENTE (EXIBE CARD LIMPO DE RETORNO) -->
+            <div id="quick-continue-box" class="quick-continue-box" style="display: none;">
+                <div class="welcome-header">
+                    <span class="welcome-tag">SESSÃO ATIVA</span>
+                    <h2 class="welcome-name" id="saved-player-name">CATARINOGABRIELLE</h2>
+                    <p class="welcome-desc">Pronto para retornar à arena de combate?</p>
+                </div>
+
+                <a href="menu.html" class="login-button btn-quick-play" id="btn-quick-play">
+                    <span>JOGAR AGORA</span> <i class="fas fa-play button-arrow"></i>
+                </a>
+
+                <button type="button" class="btn-switch-account" id="btn-show-form">
+                    <i class="fas fa-user-edit"></i> Entrar com outra conta
+                </button>
             </div>
 
-            <form id="login-form">
-                <div class="input-group">
-                    <i class="fas fa-envelope input-icon"></i>
-                    <input type="email" id="email" placeholder="combatente@los.arena" required autocomplete="email">
+            <!-- CASO 2: FORMULÁRIO DE LOGIN (EMAIL E SENHA) -->
+            <div id="form-wrapper">
+                <div class="panel-header">
+                    <h2>ACESSO À ARENA</h2>
+                    <p>Identifique seu combatente para conectar</p>
                 </div>
 
-                <div class="input-group">
-                    <i class="fas fa-lock input-icon"></i>
-                    <input type="password" id="password" placeholder="********" required autocomplete="current-password">
+                <form id="login-form">
+                    <div class="input-group">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="email" placeholder="combatente@los.arena" required autocomplete="email">
+                    </div>
+
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="password" placeholder="********" required autocomplete="current-password">
+                    </div>
+
+                    <button type="submit" class="login-button" id="btn-submit">
+                        <span>CONECTAR</span> <i class="fas fa-arrow-right button-arrow"></i>
+                    </button>
+
+                    <div id="login-error">Erro ao autenticar!</div>
+                </form>
+
+                <div class="login-links">
+                    <a href="#" id="link-forgot">ESQUECEU A SENHA?</a>
                 </div>
-
-                <button type="submit" class="login-button" id="btn-submit">
-                    <span>CONECTAR</span> <i class="fas fa-arrow-right button-arrow"></i>
-                </button>
-
-                <div id="login-error">Erro ao conectar!</div>
-            </form>
-
-            <div class="login-links">
-                <a href="#">ESQUECEU A SENHA?</a>
             </div>
         </div>
     </div>
@@ -83,9 +85,37 @@
         // Registro do Service Worker PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js').catch(err => console.log('SW falhou:', err));
+                navigator.serviceWorker.register('service-worker.js').catch(() => {});
             });
         }
+
+        // Lógica inteligente de exibição de sessão existente (apenas UM botão verde na tela!)
+        try {
+            const token = localStorage.getItem('ygaming_token');
+            const playerInfo = JSON.parse(localStorage.getItem('arenaPlayerInfo') || '{}');
+            const arenaPlayer = JSON.parse(localStorage.getItem('arenaPlayer') || '{}');
+            const name = playerInfo.username || arenaPlayer.nickname;
+
+            const quickBox = document.getElementById('quick-continue-box');
+            const formWrapper = document.getElementById('form-wrapper');
+            const nameEl = document.getElementById('saved-player-name');
+
+            if (token && name && quickBox && formWrapper && nameEl) {
+                nameEl.innerText = name;
+                quickBox.style.display = 'flex';
+                formWrapper.style.display = 'none';
+
+                const btnSwitch = document.getElementById('btn-show-form');
+                if (btnSwitch) {
+                    btnSwitch.addEventListener('click', () => {
+                        quickBox.style.display = 'none';
+                        formWrapper.style.display = 'block';
+                        const emailInput = document.getElementById('email');
+                        if (emailInput) emailInput.focus();
+                    });
+                }
+            }
+        } catch (e) {}
 
         document.getElementById('login-form').addEventListener('submit', function (event) {
             event.preventDefault();

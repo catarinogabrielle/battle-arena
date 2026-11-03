@@ -1,89 +1,59 @@
 /**
  * BATTLE ARENA: LAST ONE STANDING - MODERN MENU CONTROLLER
- * Full Web Audio SFX, Dynamic Hero Showcase, Live Stats & Multiplayer
+ * Full Web Audio SFX, Clean Champion Showcase & Multiplayer Realtime
  */
 
 // ==========================================
-// 1. ROSTER DE CAMPEÕES & DADOS COMPLETOS
+// 1. ROSTER DE CAMPEÕES
 // ==========================================
 const characters = [
     {
         id: 'kaelen',
         name: 'KAELEN',
         class: 'GUERREIRO DO SOL',
-        role: 'COMBATENTE',
         img: 'assets/kaelen.png',
         color: '#00d2ff',
-        weapon: 'melee',
-        weaponType: 'CORPO A CORPO',
-        weaponName: 'Espada Solar',
-        stats: { dano: 85, defesa: 80, velocidade: 70, alcance: 35 },
-        desc: 'Golpes devastadores com lâmina de plasma e defesa sólida.'
+        weapon: 'melee'
     },
     {
         id: 'elara',
         name: 'ELARA',
         class: 'PATRULHEIRA DA FLORESTA',
-        role: 'ATIRADORA',
         img: 'assets/elara.png',
         color: '#00ff88',
-        weapon: 'ranged',
-        weaponType: 'À DISTÂNCIA',
-        weaponName: 'Arco Cósmico',
-        stats: { dano: 75, defesa: 55, velocidade: 95, alcance: 90 },
-        desc: 'Alta agilidade e disparos velozes a longa distância.'
+        weapon: 'ranged'
     },
     {
         id: 'malacor',
         name: 'MALACOR',
         class: 'MAGO DAS SOMBRAS',
-        role: 'CONJURADOR',
         img: 'assets/malacor.png',
         color: '#b19cd9',
-        weapon: 'ranged',
-        weaponType: 'À DISTÂNCIA',
-        weaponName: 'Orbe do Vazio',
-        stats: { dano: 95, defesa: 45, velocidade: 60, alcance: 85 },
-        desc: 'Projéteis arcanos sombrios com altíssimo poder explosivo.'
+        weapon: 'ranged'
     },
     {
         id: 'lyra',
         name: 'LYRA',
         class: 'SACERDOTISA DA LUZ',
-        role: 'SUPORTE / PALADINA',
         img: 'assets/lyra.png',
         color: '#ffd700',
-        weapon: 'melee',
-        weaponType: 'CORPO A CORPO',
-        weaponName: 'Cetro da Aurora',
-        stats: { dano: 70, defesa: 85, velocidade: 75, alcance: 40 },
-        desc: 'Regenera sua própria vida a cada impacto bem-sucedido.'
+        weapon: 'melee'
     },
     {
         id: 'silas',
         name: 'SILAS',
         class: 'ASSASSINO DA NÉVOA',
-        role: 'ASSASSINO VELOZ',
         img: 'assets/silas.png',
         color: '#ffffff',
-        weapon: 'melee',
-        weaponType: 'CORPO A CORPO',
-        weaponName: 'Adagas Espectrais',
-        stats: { dano: 100, defesa: 40, velocidade: 100, alcance: 30 },
-        desc: 'Velocidade extrema e letalidade em investidas precisas.'
+        weapon: 'melee'
     },
     {
         id: 'morwen',
         name: 'MORWEN',
         class: 'INVOCADORA ELEMENTAL',
-        role: 'DESTRUIDORA',
         img: 'assets/morwen.png',
         color: '#ff3d68',
-        weapon: 'ranged',
-        weaponType: 'À DISTÂNCIA',
-        weaponName: 'Chama Primitiva',
-        stats: { dano: 90, defesa: 60, velocidade: 70, alcance: 80 },
-        desc: 'Esferas flamejantes de alta combustão contínua.'
+        weapon: 'ranged'
     }
 ];
 
@@ -92,11 +62,6 @@ let selectedCharIndex = 0;
 // Elementos da interface
 const rosterContainer = document.getElementById('roster-container');
 const mainImg = document.getElementById('main-hero-img');
-const mainName = document.getElementById('main-hero-name');
-const mainClass = document.getElementById('main-hero-class');
-const mainRole = document.getElementById('main-hero-role');
-const mainWeaponType = document.getElementById('main-hero-weapon-type');
-const mainWeaponDesc = document.getElementById('main-hero-weapon-desc');
 const hudAvatarImg = document.getElementById('hud-avatar-img');
 const nickElement = document.getElementById('player-nickname');
 const rankUserName = document.getElementById('rank-user-name');
@@ -191,7 +156,7 @@ const AudioEngine = {
     }
 };
 
-// Configuração do botão de som no Header
+// Botão de som no Header
 const btnSound = document.getElementById('btn-toggle-sound');
 const soundIcon = document.getElementById('sound-icon');
 if (btnSound && soundIcon) {
@@ -212,7 +177,7 @@ if (btnSound && soundIcon) {
     });
 }
 
-// Botão de Fullscreen no Header
+// Botão de Tela Cheia
 const btnFullscreen = document.getElementById('btn-toggle-fullscreen');
 if (btnFullscreen) {
     btnFullscreen.addEventListener('click', () => {
@@ -232,15 +197,9 @@ const savedPlayer = JSON.parse(localStorage.getItem('arenaPlayer') || '{}');
 const playerInfo = JSON.parse(localStorage.getItem('arenaPlayerInfo') || '{}');
 const activeNickname = savedPlayer.nickname || playerInfo.username || 'CATARINO';
 
-if (nickElement) {
-    nickElement.innerText = activeNickname;
-}
-if (rankUserName) {
-    rankUserName.innerText = `${activeNickname} (VOCÊ)`;
-}
-if (rankTop1Name) {
-    rankTop1Name.innerText = activeNickname;
-}
+if (nickElement) nickElement.innerText = activeNickname;
+if (rankUserName) rankUserName.innerText = `${activeNickname} (VOCÊ)`;
+if (rankTop1Name) rankTop1Name.innerText = activeNickname;
 
 if (savedPlayer.charId) {
     const idx = characters.findIndex(c => c.id === savedPlayer.charId);
@@ -262,9 +221,7 @@ if (btnEditNick && nickElement) {
 }
 
 if (nickElement) {
-    nickElement.addEventListener('blur', () => {
-        savePlayerData();
-    });
+    nickElement.addEventListener('blur', () => savePlayerData());
     nickElement.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -294,46 +251,8 @@ function getPlayerConfig() {
 // 4. SELEÇÃO & RENDERIZAÇÃO DO ROSTER
 // ==========================================
 function updateHeroDetails(char) {
-    // Atualiza variável CSS do tema da página
     document.documentElement.style.setProperty('--hero-theme-color', char.color);
-
-    // Textos e Badges
-    if (mainName) mainName.innerText = char.name;
-    if (mainClass) mainClass.innerText = char.class;
-    if (mainRole) mainRole.innerHTML = `<i class="fas fa-shield-alt"></i> ${char.role}`;
-    if (mainWeaponType) {
-        const icon = char.weapon === 'melee' ? 'fa-fist-raised' : 'fa-bullseye';
-        mainWeaponType.innerHTML = `<i class="fas ${icon}"></i> ${char.weaponType}`;
-    }
-    if (mainWeaponDesc) {
-        mainWeaponDesc.innerHTML = `<i class="fas fa-wand-magic-sparkles"></i> <span><strong>${char.weaponName}:</strong> ${char.desc}</span>`;
-    }
-
-    // Avatar no Top HUD
-    if (hudAvatarImg) {
-        hudAvatarImg.src = char.img;
-    }
-
-    // Barras de Status Animadas
-    const statDano = document.getElementById('stat-dano');
-    const statDefesa = document.getElementById('stat-defesa');
-    const statVelocidade = document.getElementById('stat-velocidade');
-    const statAlcance = document.getElementById('stat-alcance');
-
-    const numDano = document.getElementById('stat-num-dano');
-    const numDefesa = document.getElementById('stat-num-defesa');
-    const numVelocidade = document.getElementById('stat-num-velocidade');
-    const numAlcance = document.getElementById('stat-num-alcance');
-
-    if (statDano) statDano.style.width = char.stats.dano + '%';
-    if (statDefesa) statDefesa.style.width = char.stats.defesa + '%';
-    if (statVelocidade) statVelocidade.style.width = char.stats.velocidade + '%';
-    if (statAlcance) statAlcance.style.width = char.stats.alcance + '%';
-
-    if (numDano) numDano.innerText = char.stats.dano;
-    if (numDefesa) numDefesa.innerText = char.stats.defesa;
-    if (numVelocidade) numVelocidade.innerText = char.stats.velocidade;
-    if (numAlcance) numAlcance.innerText = char.stats.alcance;
+    if (hudAvatarImg) hudAvatarImg.src = char.img;
 }
 
 function renderRoster() {
@@ -359,13 +278,11 @@ function renderRoster() {
 
             if (mainImg) {
                 mainImg.style.opacity = '0';
-                mainImg.style.transform = 'translateY(15px) scale(0.96)';
                 setTimeout(() => {
                     mainImg.src = char.img;
                     updateHeroDetails(char);
                     mainImg.style.opacity = '1';
-                    mainImg.style.transform = 'translateY(0) scale(1)';
-                }, 140);
+                }, 120);
             }
 
             savePlayerData();
@@ -402,7 +319,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
 window.addEventListener('appinstalled', () => {
     deferredPWAInstallPrompt = null;
     if (btnInstallPwa) {
-        btnInstallPwa.innerHTML = '<div class="dock-icon"><i class="fas fa-check"></i></div><span>Instalado</span>';
+        btnInstallPwa.innerHTML = '<div class="action-btn-icon"><i class="fas fa-check"></i></div><span>Instalado</span>';
         setTimeout(() => { btnInstallPwa.style.display = 'none'; }, 3000);
     }
 });
@@ -638,7 +555,7 @@ function renderRoomList(rooms) {
     if (!listContainer) return;
     listContainer.innerHTML = '';
 
-    // 1. Opção Fixa: Treino Solo vs IA
+    // 1. Treino Solo vs IA
     const soloLi = document.createElement('li');
     soloLi.classList.add('room-item');
     soloLi.innerHTML = `

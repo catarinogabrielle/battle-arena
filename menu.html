@@ -15,22 +15,20 @@
     <link rel="shortcut icon" type="image/png" href="assets/logo-los.png">
     <link rel="apple-touch-icon" href="assets/logo-los.png">
 
-    <!-- FONTES GAMER MODERNAS (GOOGLE FONTS) -->
+    <!-- FONTES GAMER MODERNAS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Rajdhani:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- FONT AWESOME & ESTILOS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style-menu.css">
 </head>
 
 <body>
-    <!-- FUNDO DINÂMICO & SCANLINES -->
-    <div class="cyber-grid-overlay"></div>
+    <!-- LUZ AMBIENTE DINÂMICA DO HERÓI -->
     <div class="ambient-glow" id="ambient-glow"></div>
 
-    <!-- HUD SUPERIOR DO JOGADOR -->
+    <!-- HUD SUPERIOR LIMPO E COMPACTO -->
     <header class="player-hud">
         <div class="player-profile-card">
             <div class="profile-avatar-frame">
@@ -42,11 +40,8 @@
                     <h1 id="player-nickname" contenteditable="true" spellcheck="false" title="Clique para editar seu apelido">CATARINO</h1>
                     <button class="btn-edit-nick" id="btn-edit-nick" title="Editar nome"><i class="fas fa-pen"></i></button>
                 </div>
-                <div class="player-xp-wrap">
+                <div class="player-badges">
                     <span class="level-badge" id="hud-level-badge">LVL 15</span>
-                    <div class="xp-bar-track" title="Progresso de nível: 2.450 / 3.000 XP">
-                        <div class="xp-bar-fill" style="width: 72%;"></div>
-                    </div>
                     <span class="rank-title-badge"><i class="fas fa-crown"></i> ELITE</span>
                 </div>
             </div>
@@ -63,10 +58,10 @@
             </div>
 
             <div class="quick-toggles">
-                <button class="icon-toggle-btn" id="btn-toggle-sound" title="Alternar Efeitos Sonoros">
+                <button class="icon-toggle-btn" id="btn-toggle-sound" title="Alternar Som">
                     <i class="fas fa-volume-up" id="sound-icon"></i>
                 </button>
-                <button class="icon-toggle-btn" id="btn-toggle-fullscreen" title="Modo Tela Cheia">
+                <button class="icon-toggle-btn" id="btn-toggle-fullscreen" title="Tela Cheia">
                     <i class="fas fa-expand"></i>
                 </button>
             </div>
@@ -76,90 +71,35 @@
     <!-- ÁREA PRINCIPAL DO JOGO -->
     <main class="cosmos-container">
 
-        <!-- LADO ESQUERDO: SHOWCASE HOLOGRÁFICO DO CAMPEÃO -->
-        <section class="character-showcase">
-            <div class="hero-stage">
-                <!-- PEDESTAL HOLOGRÁFICO 3D -->
-                <div class="hologram-pedestal" id="pedestal-ring">
-                    <div class="pedestal-disc"></div>
-                    <div class="pedestal-ring-outer"></div>
-                    <div class="pedestal-ring-inner"></div>
-                    <div class="pedestal-particles"></div>
-                </div>
-
-                <!-- RENDER DO CAMPEÃO COM ANIMAÇÃO -->
-                <img src="assets/kaelen.png" alt="Personagem" id="main-hero-img" class="hero-render">
+        <!-- LADO ESQUERDO: CARTÃO DO CAMPEÃO & SELETOR DE HERÓIS -->
+        <section class="champion-stage">
+            <!-- CARTÃO OFICIAL EM DESTAQUE (SEM NENHUMA CAIXA PRETA COBRINDO A ILUSTRAÇÃO) -->
+            <div class="champion-card-frame">
+                <img src="assets/kaelen.png" alt="Card do Campeão" id="main-hero-img" class="champion-card-img">
             </div>
 
-            <!-- DETALHES & ATRIBUTOS DO PERSONAGEM -->
-            <div class="hero-info-card" id="hero-info-card">
-                <div class="hero-badge-row">
-                    <span class="hero-role-tag" id="main-hero-role"><i class="fas fa-shield-alt"></i> COMBATENTE</span>
-                    <span class="hero-weapon-tag" id="main-hero-weapon-type"><i class="fas fa-fist-raised"></i> CORPO A CORPO</span>
-                </div>
-
-                <div class="hero-title-box">
-                    <h2 class="hero-name" id="main-hero-name">KAELEN</h2>
-                    <p class="hero-class" id="main-hero-class">GUERREIRO DO SOL</p>
-                </div>
-
-                <!-- BARRAS DE STATUS DO CAMPEÃO -->
-                <div class="hero-stats-grid">
-                    <div class="stat-row">
-                        <span class="stat-label"><i class="fas fa-bolt"></i> DANO</span>
-                        <div class="stat-bar-track">
-                            <div class="stat-bar-fill" id="stat-dano" style="width: 85%;"></div>
-                        </div>
-                        <span class="stat-num" id="stat-num-dano">85</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label"><i class="fas fa-shield-virus"></i> DEFESA</span>
-                        <div class="stat-bar-track">
-                            <div class="stat-bar-fill" id="stat-defesa" style="width: 80%;"></div>
-                        </div>
-                        <span class="stat-num" id="stat-num-defesa">80</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label"><i class="fas fa-running"></i> AGILIDADE</span>
-                        <div class="stat-bar-track">
-                            <div class="stat-bar-fill" id="stat-velocidade" style="width: 70%;"></div>
-                        </div>
-                        <span class="stat-num" id="stat-num-velocidade">70</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label"><i class="fas fa-crosshairs"></i> ALCANCE</span>
-                        <div class="stat-bar-track">
-                            <div class="stat-bar-fill" id="stat-alcance" style="width: 35%;"></div>
-                        </div>
-                        <span class="stat-num" id="stat-num-alcance">35</span>
-                    </div>
-                </div>
-
-                <div class="hero-weapon-desc" id="main-hero-weapon-desc">
-                    <i class="fas fa-wand-magic-sparkles"></i> <span><strong>Espada Solar:</strong> Golpes devastadores de plasma radiante.</span>
-                </div>
-            </div>
-
-            <!-- SELETOR DOCK DE CAMPEÕES (ROSTER) -->
-            <div class="character-roster-wrap">
-                <span class="roster-heading">SELECIONE SEU HERÓI</span>
+            <!-- SELETOR DE HERÓIS EM MINIATURA (PROPORÇÃO 16:9 PERFEITA) -->
+            <div class="roster-bar">
+                <span class="roster-label">SELECIONE O HERÓI</span>
                 <div class="character-roster" id="roster-container">
-                    <!-- Gerado dinamicamente via JS -->
+                    <!-- Gerado dinamicamente via script-menu.js -->
                 </div>
             </div>
         </section>
 
-        <!-- LADO DIREITO: AÇÕES, MODO E BOTÃO JOGAR -->
+        <!-- LADO DIREITO: AÇÕES, MODO E ENTRADA NA ARENA -->
         <section class="action-nexus">
-            <!-- MODO ATUAL DE JOGO -->
-            <div class="game-mode-card" id="mode-card">
-                <div class="mode-badge-live"><span class="live-dot"></span> TEMPORADA 1</div>
+            <!-- CARD DE MODO DE JOGO -->
+            <div class="game-mode-card">
+                <div class="mode-header">
+                    <span class="mode-live-dot"></span>
+                    <span class="mode-tag">TEMPORADA 1 &bull; BATTLE ROYALE</span>
+                </div>
                 <div class="mode-body">
                     <div class="mode-icon"><i class="fas fa-meteor"></i></div>
                     <div class="mode-text">
-                        <span class="mode-subtitle">MODO COMPETITIVO</span>
-                        <h3 class="mode-title">BATTLE ROYALE</h3>
-                        <p class="mode-desc">Hexágono Cósmico &bull; Tempestade Progressiva</p>
+                        <h3 class="mode-title">HEXÁGONO CÓSMICO</h3>
+                        <p class="mode-desc">Arena de sobrevivência com tempestade progressiva</p>
                     </div>
                 </div>
             </div>
@@ -167,35 +107,34 @@
             <!-- BOTÃO MASSIVO DE ENTRAR NA ARENA -->
             <button class="btn-massive-play" id="btn-play">
                 <div class="btn-play-sheen"></div>
-                <div class="btn-play-glow"></div>
                 <div class="play-content">
                     <span class="play-title">ENTRAR NA ARENA</span>
-                    <span class="play-subtitle">SOLO VS IA OU MULTIPLAYER ONLINE</span>
+                    <span class="play-subtitle">SOLO OU MULTIPLAYER ONLINE</span>
                 </div>
                 <div class="play-icon-box">
                     <i class="fas fa-play play-icon"></i>
                 </div>
             </button>
 
-            <!-- DOCK DE BOTÕES SECUNDÁRIOS -->
-            <div class="action-dock">
-                <button class="dock-btn" id="btn-install-pwa" title="Instalar aplicativo PWA">
-                    <div class="dock-icon"><i class="fas fa-download"></i></div>
+            <!-- DOCK DE AÇÕES EM GRID 2x2 EQUILIBRADO -->
+            <div class="action-grid">
+                <button class="action-card-btn" id="btn-install-pwa" title="Instalar aplicativo PWA">
+                    <div class="action-btn-icon"><i class="fas fa-download"></i></div>
                     <span>Instalar App</span>
                 </button>
 
-                <button class="dock-btn" id="btn-ranking" title="Ver Ranking Global">
-                    <div class="dock-icon"><i class="fas fa-trophy"></i></div>
+                <button class="action-card-btn" id="btn-ranking" title="Ver Ranking Global">
+                    <div class="action-btn-icon"><i class="fas fa-trophy"></i></div>
                     <span>Ranking</span>
                 </button>
 
-                <button class="dock-btn" id="btn-guide" title="Guia de Combate e Controles">
-                    <div class="dock-icon"><i class="fas fa-gamepad"></i></div>
+                <button class="action-card-btn" id="btn-guide" title="Guia de Combate e Controles">
+                    <div class="action-btn-icon"><i class="fas fa-gamepad"></i></div>
                     <span>Controles</span>
                 </button>
 
-                <button class="dock-btn" id="btn-options" title="Opções de Conta e Sair">
-                    <div class="dock-icon"><i class="fas fa-cog"></i></div>
+                <button class="action-card-btn" id="btn-options" title="Opções de Conta e Sair">
+                    <div class="action-btn-icon"><i class="fas fa-cog"></i></div>
                     <span>Opções</span>
                 </button>
             </div>
