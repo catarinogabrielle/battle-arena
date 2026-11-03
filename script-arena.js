@@ -1,6 +1,6 @@
 /**
  * BATTLE ARENA - LAST ONE STANDING
- * Engine Híbrida: Multiplayer Online via WebSockets + Batalha Solo com IA Avançada
+ * Engine de Combate: Suporte a Multiplayer Online Sincronizado e IA Avançada
  */
 
 const canvas = document.getElementById('gameCanvas');
@@ -23,27 +23,19 @@ const elements = {
     rankingList: document.getElementById('ranking-list'),
     weaponNameHud: document.getElementById('hud-weapon-name'),
     playerNameHud: document.getElementById('player-name-hud'),
-    zoneHud: document.querySelector('.hud-zone'),
-    modeBadge: document.getElementById('hud-mode-badge'),
-    btnSkipLoading: document.getElementById('btn-skip-loading')
+    zoneHud: document.querySelector('.hud-zone')
 };
 
-// Parâmetros de URL e Sessão
-const urlParams = new URLSearchParams(window.location.search);
-const queryMode = urlParams.get('mode'); // 'online' | 'solo'
-const queryRoom = urlParams.get('room');
-const queryDiff = urlParams.get('diff') || 'veteran';
-const queryBots = parseInt(urlParams.get('bots')) || 5;
-
-const multiSession = JSON.parse(sessionStorage.getItem('multiplayerSession') || 'null');
-const soloSession = JSON.parse(sessionStorage.getItem('soloSession') || 'null');
-
-const isOnlineGame = (queryMode === 'online') || (multiSession && multiSession.isOnline);
-const roomCode = queryRoom || (multiSession ? multiSession.roomCode : null);
-
+// Dados do Jogador e da Sessão
 const savedData = JSON.parse(localStorage.getItem('arenaPlayer')) || {
     nickname: "PLAYER", color: "#00d2ff", weapon: "melee", charId: "kaelen"
 };
+
+const urlParams = new URLSearchParams(window.location.search);
+const roomParam = urlParams.get('room');
+const sessionData = JSON.parse(sessionStorage.getItem('arenaSession') || 'null');
+const isOnlineRequested = !!roomParam || (sessionData && sessionData.isOnline);
+const targetRoomCode = roomParam || (sessionData ? sessionData.roomCode : null);
 
 function resizeCanvas() {
     canvas.width = window.innerWidth;
@@ -62,7 +54,7 @@ const CONFIG = {
     reloadFrames: 180,
     regenDelay: 250,
     regenAmount: 0.6,
-    zoneDelayFrames: 1800 // 30 segundos de preparação
+    zoneDelayFrames: 1800 // 30 segundos
 };
 
 const keys = {};
@@ -85,7 +77,7 @@ window.addEventListener('mouseup', e => {
 });
 
 // ==========================================
-// CLASSE PROJÉTIL (CLIENTE)
+// CLASSE PROJÉTIL
 // ==========================================
 class Projectile {
     constructor(x, y, angle, color, ownerId, ownerName, charId) {
@@ -114,7 +106,7 @@ class Projectile {
         ctx.rotate(angle);
 
         if (this.charId === 'elara') {
-            ctx.shadowBlur = 4;
+            ctx.shadowBlur = 3;
             ctx.shadowColor = "rgba(0,0,0,0.5)";
             ctx.fillStyle = "#5c3a21";
             ctx.fillRect(-15, -1.5, 25, 3);
@@ -192,10 +184,10 @@ class Projectile {
 }
 
 // ==========================================
-// CLASSE JOGADOR (CLIENTE & IA OFFLINE)
+// CLASSE JOGADOR (CLIENTE & IA AVANÇADA)
 // ==========================================
 class Player {
-    constructor(id, name, color, x, y, isBot, weaponType, controls, charId, difficulty = 'veteran') {
+    constructor(id, name, color, x, y, isBot, weaponType, controls, charId) {
         this.id = id;
         this.name = name;
         this.color = color;
@@ -209,7 +201,6 @@ class Player {
         this.weapon = weaponType;
         this.controls = controls;
         this.charId = charId;
-        this.difficulty = difficulty;
 
         this.angle = 0;
         this.cooldown = 0;
@@ -277,11 +268,9 @@ class Player {
             else elements.damageOverlay.classList.remove('pulse-red');
         } else {
             // ==========================================
-            // IA AVANÇADA OFFLINE (RECRUTA / VETERANO / MESTRE)
+            // IA AVANÇADA (ESQUIVA + KITING + PREDIÇÃO)
             // ==========================================
-            const diff = this.difficulty;
-            let speed = sWalk * (diff === 'master' ? 1.05 : (diff === 'recruit' ? 0.8 : 0.95));
-
+            let speed = sWalk * 0.96;
             let distToZone = Math.hypot(this.x - Game.zone.x, this.y - Game.zone.y);
 
             // 1. ZONA SEGURA (PRIORIDADE ABSOLUTA)
@@ -291,20 +280,18 @@ class Player {
                 moveY = Math.sin(this.angle) * sRun * 1.1;
                 this.botState = 'ZONE_FLEE';
             } else {
-                // 2. ESQUIVA INTELIGENTE DE PROJÉTEIS (DODGE)
+                // 2. ESQUIVA INTELIGENTE DE PROJÉTEIS (DODGE 90°)
                 let incomingProj = null;
-                if (diff !== 'recruit') {
-                    for (let pr of Game.projectiles) {
-                        if (pr.ownerId !== this.id) {
-                            let d = Math.hypot(pr.x - this.x, pr.y - this.y);
-                            if (d < 200) {
-                                let prAngle = Math.atan2(pr.vy, pr.vx);
-                                let toBotAngle = Math.atan2(this.y - pr.y, this.x - pr.x);
-                                let diffAngle = Math.abs(prAngle - toBotAngle);
-                                if (diffAngle < 0.45 || diffAngle > Math.PI * 2 - 0.45) {
-                                    incomingProj = pr;
-                                    break;
-                                }
+                for (let pr of Game.projectiles) {
+                    if (pr.ownerId !== this.id) {
+                        let d = Math.hypot(pr.x - this.x, pr.y - this.y);
+                        if (d < 200) {
+                            let prAngle = Math.atan2(pr.vy, pr.vx);
+                            let toBotAngle = Math.atan2(this.y - pr.y, this.x - pr.x);
+                            let diffAngle = Math.abs(prAngle - toBotAngle);
+                            if (diffAngle < 0.45 || diffAngle > Math.PI * 2 - 0.45) {
+                                incomingProj = pr;
+                                break;
                             }
                         }
                     }
@@ -317,11 +304,11 @@ class Player {
                     moveY = Math.sin(dodgeAngle) * sRun;
                     this.botState = 'DODGING';
                 } else {
-                    // 3. SELEÇÃO DE ALVOS
+                    // 3. SELEÇÃO DE ALVO INTELIGENTE (MENOR HP OU MAIS PRÓXIMO)
                     let newClosest = null;
                     let minDist = Infinity;
+                    let lowestHpTarget = null;
                     let lowestHp = Infinity;
-                    let lowestTarget = null;
 
                     Game.players.forEach(p => {
                         if (p !== this && p.alive) {
@@ -331,11 +318,11 @@ class Player {
                         }
                     });
 
-                    let target = (diff === 'master' && lowestTarget && minDist < 450 && lowestTarget.hp < 150) ? lowestTarget : newClosest;
+                    let target = (lowestHpTarget && minDist < 450 && lowestHpTarget.hp < 150) ? lowestHpTarget : newClosest;
                     this.currentTarget = target;
                     let closest = this.currentTarget;
 
-                    // 4. KITING TÁTICO DURANTE RECARGA
+                    // 4. KITING DURANTE RECARGA
                     if (this.reloadTimer > 0 && closest && minDist < 350) {
                         this.botState = 'KITING';
                         this.angle = Math.atan2(this.y - closest.y, this.x - closest.x);
@@ -354,9 +341,9 @@ class Player {
                             this.strafeTimer = 40 + Math.random() * 60;
                         }
 
-                        let leadTime = diff === 'master' ? 12 : (diff === 'veteran' ? 8 : 0);
-                        let aimX = closest.x + (closest.vx || 0) * leadTime;
-                        let aimY = closest.y + (closest.vy || 0) * leadTime;
+                        // MIRA PREDITIVA
+                        let aimX = closest.x + (closest.vx || 0) * 10;
+                        let aimY = closest.y + (closest.vy || 0) * 10;
                         this.angle = Math.atan2(aimY - this.y, aimX - this.x);
 
                         if (this.weapon === 'melee') {
@@ -375,7 +362,6 @@ class Player {
                                 this.attack();
                             }
                         } else {
-                            // Ranged
                             if (minDist < 200) {
                                 moveX = -Math.cos(this.angle) * speed * 1.0;
                                 moveY = -Math.sin(this.angle) * speed * 1.0;
@@ -388,7 +374,7 @@ class Player {
                             }
 
                             if (this.cooldown <= 0 && this.currentAmmo > 0 && this.reloadTimer <= 0) {
-                                let error = diff === 'master' ? (Math.random() - 0.5) * 0.05 : (diff === 'recruit' ? (Math.random() - 0.5) * 0.35 : (Math.random() - 0.5) * 0.15);
+                                let error = (minDist > 300) ? (Math.random() - 0.5) * 0.12 : 0;
                                 this.angle += error;
                                 this.attack();
                             }
@@ -399,7 +385,10 @@ class Player {
                         if (!this.wanderTarget || Math.hypot(this.wanderTarget.x - this.x, this.wanderTarget.y - this.y) < 30) {
                             let r = Game.zone.radius * Math.random() * 0.6;
                             let theta = Math.random() * Math.PI * 2;
-                            this.wanderTarget = { x: Game.zone.x + r * Math.cos(theta), y: Game.zone.y + r * Math.sin(theta) };
+                            this.wanderTarget = {
+                                x: Game.zone.x + r * Math.cos(theta),
+                                y: Game.zone.y + r * Math.sin(theta)
+                            };
                         }
                         this.angle = Math.atan2(this.wanderTarget.y - this.y, this.wanderTarget.x - this.x);
                         moveX = Math.cos(this.angle) * speed * 0.6;
@@ -420,7 +409,6 @@ class Player {
         if (this.cooldown > 0) this.cooldown--;
         if (this.attackFrame > 0) this.attackFrame--;
 
-        // Dano da tempestade
         if (Math.hypot(this.x - Game.zone.x, this.y - Game.zone.y) > Game.zone.radius) {
             this.takeDamage(CONFIG.zoneDamage, "Tempestade Cósmica");
         }
@@ -439,7 +427,7 @@ class Player {
         }
 
         if (this.weapon === 'melee') {
-            this.cooldown = 18;
+            this.cooldown = 20;
             let range = (this.charId === 'silas') ? 75 : 95;
             Game.players.forEach(p => {
                 if (p !== this && p.alive) {
@@ -456,7 +444,7 @@ class Player {
                 }
             });
         } else {
-            this.cooldown = 28;
+            this.cooldown = 32;
             Game.projectiles.push(new Projectile(this.x, this.y, this.angle, this.color, this.id, this.name, this.charId));
         }
     }
@@ -626,29 +614,27 @@ class Player {
         }
         ctx.restore();
 
-        // Nome sobre o jogador
         ctx.fillStyle = "white";
         ctx.font = "bold 12px Arial";
         ctx.textAlign = "center";
         ctx.fillText(this.name, this.x, this.y - 35);
 
-        // Barra de Vida
         if (this.id !== 'P1' || Game.isSpectating) {
-            let barW = 44;
+            let barW = 40;
             ctx.fillStyle = "rgba(0,0,0,0.7)";
-            ctx.fillRect(this.x - 22, this.y - 30, barW, 4);
+            ctx.fillRect(this.x - 20, this.y - 30, barW, 4);
             ctx.fillStyle = (this.hp < 150) ? "#ff3d68" : this.color;
-            ctx.fillRect(this.x - 22, this.y - 30, (Math.max(0, this.hp) / this.maxHp) * barW, 4);
+            ctx.fillRect(this.x - 20, this.y - 30, (Math.max(0, this.hp) / this.maxHp) * barW, 4);
         }
     }
 }
 
 // ==========================================
-// GERENCIADOR PRINCIPAL DO JOGO (LOCAL & ONLINE)
+// GAME ENGINE (LOCAL & ONLINE)
 // ==========================================
 const Game = {
-    active: false,
-    isOnline: isOnlineGame,
+    active: true,
+    isOnline: false,
     socket: null,
     players: [],
     projectiles: [],
@@ -667,59 +653,82 @@ const Game = {
             radius: Math.max(canvas.width, canvas.height) * 0.45
         };
 
-        if (this.isOnline) {
-            this.initOnlineMode();
+        if (isOnlineRequested && typeof io !== 'undefined') {
+            this.tryInitOnline();
         } else {
-            this.initSoloMode();
+            this.initLocal();
         }
 
         this.setupWeaponHud();
         this.loop();
     },
 
-    initSoloMode() {
-        elements.modeBadge.innerHTML = `<i class="fas fa-robot"></i> VS IA (${queryDiff.toUpperCase()})`;
-        elements.modeBadge.style.borderColor = "#00d2ff";
-
+    initLocal() {
+        this.isOnline = false;
         const cX = canvas.width / 2;
         const cY = canvas.height / 2;
-        const offset = Math.min(canvas.width, canvas.height) * 0.28;
-
-        const allBots = [
-            { id: 'B1', name: 'Malacor_Bot', color: '#B19CD9', ox: -offset, oy: -offset, weapon: 'ranged', charId: 'malacor' },
-            { id: 'B2', name: 'Kaelen_Bot', color: '#00d2ff', ox: offset, oy: -offset, weapon: 'melee', charId: 'kaelen' },
-            { id: 'B3', name: 'Elara_Bot', color: '#A7FF83', ox: -offset, oy: offset, weapon: 'ranged', charId: 'elara' },
-            { id: 'B4', name: 'Silas_Bot', color: '#ffffff', ox: offset, oy: offset, weapon: 'melee', charId: 'silas' },
-            { id: 'B5', name: 'Morwen_Bot', color: '#ff3d68', ox: offset * 1.2, oy: 0, weapon: 'ranged', charId: 'morwen' }
-        ];
-
-        const botsToUse = allBots.slice(0, queryBots);
+        const offset = Math.min(canvas.width, canvas.height) * 0.25;
 
         this.players = [
             new Player('P1', savedData.nickname, savedData.color, cX, cY, false, savedData.weapon,
                 { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD' }, savedData.charId),
-            ...botsToUse.map(b => new Player(b.id, b.name, b.color, cX + b.ox, cY + b.oy, true, b.weapon, null, b.charId, queryDiff))
+            new Player('B1', 'Malacor_Bot', '#B19CD9', cX - offset, cY - offset, true, 'ranged', null, 'malacor'),
+            new Player('B2', 'Kaelen_Bot', '#00d2ff', cX + offset, cY - offset, true, 'melee', null, 'kaelen'),
+            new Player('B3', 'Elara_Bot', '#A7FF83', cX - offset, cY + offset, true, 'ranged', null, 'elara'),
+            new Player('B4', 'Silas_Bot', '#ffffff', cX + offset, cY + offset, true, 'melee', null, 'silas'),
+            new Player('B5', 'Morwen_Bot', '#ff3d68', cX + (offset * 1.2), cY, true, 'ranged', null, 'morwen')
         ];
 
         this.resetPlayerPips(this.players[0].maxAmmo);
     },
 
-    initOnlineMode() {
-        elements.modeBadge.innerHTML = `<i class="fas fa-globe"></i> ONLINE #${roomCode || 'SALA'}`;
-        elements.modeBadge.style.borderColor = "#00ff88";
-
+    tryInitOnline() {
         try {
-            const serverUrl = window.location.protocol.startsWith('http') ? window.location.origin : 'http://localhost:3000';
-            this.socket = io(serverUrl);
+            const url = window.location.protocol.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+            this.socket = io(url);
 
             this.socket.on('connect', () => {
+                this.isOnline = true;
                 this.localPlayerId = this.socket.id;
-                // Re-associa à sala se necessário
-                this.socket.emit('player_input', { up: false, down: false, left: false, right: false, sprint: false, angle: 0 });
             });
 
             this.socket.on('game_snapshot', (snapshot) => {
-                this.handleServerSnapshot(snapshot);
+                const scaleX = canvas.width / 1920;
+                const scaleY = canvas.height / 1080;
+
+                this.zone = {
+                    x: snapshot.zone.x * scaleX,
+                    y: snapshot.zone.y * scaleY,
+                    radius: snapshot.zone.radius * Math.min(scaleX, scaleY)
+                };
+
+                this.players = snapshot.players.map(sp => {
+                    const p = new Player(sp.id, sp.name, sp.color, sp.x * scaleX, sp.y * scaleY, sp.isBot, sp.weapon, null, sp.charId);
+                    p.hp = sp.hp;
+                    p.maxHp = sp.maxHp;
+                    p.alive = sp.alive;
+                    p.angle = sp.angle;
+                    p.currentAmmo = sp.currentAmmo;
+                    p.maxAmmo = sp.maxAmmo;
+                    p.reloadTimer = sp.reloadTimer;
+                    p.attackFrame = sp.attackFrame;
+                    p.healAura = sp.healAura;
+
+                    if (sp.id === this.localPlayerId) {
+                        p.updateUI();
+                        if (!sp.alive && !this.isSpectating) this.startSpectating();
+                    }
+                    return p;
+                });
+
+                this.projectiles = snapshot.projectiles.map(pr => {
+                    const p = new Projectile(pr.x * scaleX, pr.y * scaleY, 0, pr.color, '', '', pr.charId);
+                    p.vx = pr.vx * scaleX;
+                    p.vy = pr.vy * scaleY;
+                    return p;
+                });
+
+                elements.aliveCount.innerText = snapshot.aliveCount;
             });
 
             this.socket.on('player_eliminated', (data) => {
@@ -727,8 +736,8 @@ const Game = {
             });
 
             this.socket.on('screen_shake', (data) => {
-                this.shakeFrames = data.duration || 30;
-                this.showWarning("⚠️ MALDIÇÃO DE TREVAS! ⚠️", "rgba(177, 156, 217, 0.9)");
+                this.shakeFrames = data.duration || 60;
+                this.showWarning("⚠️ MALDIÇÃO DE MALACOR! ⚠️", "rgba(177, 156, 217, 0.9)");
             });
 
             this.socket.on('match_finished', (data) => {
@@ -736,60 +745,13 @@ const Game = {
                 this.showRanking(data.winner, data.ranking);
             });
 
-            this.socket.on('disconnect', () => {
-                this.showWarning("⚠️ DESCONECTADO DO SERVIDOR", "rgba(255, 61, 104, 0.9)");
+            this.socket.on('connect_error', () => {
+                this.initLocal();
             });
 
         } catch (e) {
-            console.error("Erro ao conectar Socket no jogo online:", e);
-            this.initSoloMode();
+            this.initLocal();
         }
-    },
-
-    handleServerSnapshot(snapshot) {
-        // Mapeia proporção da tela virtual (1920x1080) para a tela local
-        const scaleX = canvas.width / 1920;
-        const scaleY = canvas.height / 1080;
-
-        // Atualiza Zona
-        this.zone = {
-            x: snapshot.zone.x * scaleX,
-            y: snapshot.zone.y * scaleY,
-            radius: snapshot.zone.radius * Math.min(scaleX, scaleY)
-        };
-
-        // Atualiza Jogadores
-        this.players = snapshot.players.map(sp => {
-            const p = new Player(sp.id, sp.name, sp.color, sp.x * scaleX, sp.y * scaleY, sp.isBot, sp.weapon, null, sp.charId);
-            p.hp = sp.hp;
-            p.maxHp = sp.maxHp;
-            p.alive = sp.alive;
-            p.angle = sp.angle;
-            p.currentAmmo = sp.currentAmmo;
-            p.maxAmmo = sp.maxAmmo;
-            p.reloadTimer = sp.reloadTimer;
-            p.attackFrame = sp.attackFrame;
-            p.healAura = sp.healAura;
-
-            // Se for o jogador local
-            if (sp.id === this.localPlayerId) {
-                p.updateUI();
-                if (!sp.alive && !this.isSpectating) {
-                    this.startSpectating();
-                }
-            }
-            return p;
-        });
-
-        // Atualiza Projéteis
-        this.projectiles = snapshot.projectiles.map(pr => {
-            const p = new Projectile(pr.x * scaleX, pr.y * scaleY, 0, pr.color, '', '', pr.charId);
-            p.vx = pr.vx * scaleX;
-            p.vy = pr.vy * scaleY;
-            return p;
-        });
-
-        elements.aliveCount.innerText = snapshot.aliveCount;
     },
 
     setupWeaponHud() {
@@ -824,7 +786,7 @@ const Game = {
             elements.spellWarning.innerText = msg;
             elements.spellWarning.style.background = color;
             elements.spellWarning.classList.remove('hidden');
-            setTimeout(() => elements.spellWarning.classList.add('hidden'), 2200);
+            setTimeout(() => elements.spellWarning.classList.add('hidden'), 2000);
         }
     },
 
@@ -832,39 +794,30 @@ const Game = {
         if (!this.active) return;
         this.frameCount++;
 
-        if (this.isOnline) {
-            // No modo online, envia inputs para o servidor
-            if (this.socket && this.socket.connected) {
-                // Calcula o ângulo da mira a partir da posição do jogador local
-                const localPlayer = this.players.find(p => p.id === this.localPlayerId);
-                let myAngle = 0;
-                if (localPlayer) {
-                    myAngle = Math.atan2(mouse.y - localPlayer.y, mouse.x - localPlayer.x);
-                }
-
-                this.socket.emit('player_input', {
-                    up: !!(keys['KeyW'] || keys['ArrowUp']),
-                    down: !!(keys['KeyS'] || keys['ArrowDown']),
-                    left: !!(keys['KeyA'] || keys['ArrowLeft']),
-                    right: !!(keys['KeyD'] || keys['ArrowRight']),
-                    sprint: !!keys['Space'],
-                    angle: myAngle,
-                    attackRequested: mouse.attackTriggered
-                });
-
-                mouse.attackTriggered = false;
+        if (this.isOnline && this.socket && this.socket.connected) {
+            const localP = this.players.find(p => p.id === this.localPlayerId);
+            let myAngle = 0;
+            if (localP) {
+                myAngle = Math.atan2(mouse.y - localP.y, mouse.x - localP.x);
             }
+
+            this.socket.emit('player_input', {
+                up: !!keys['KeyW'],
+                down: !!keys['KeyS'],
+                left: !!keys['KeyA'],
+                right: !!keys['KeyD'],
+                sprint: !!keys['Space'],
+                angle: myAngle,
+                attackRequested: mouse.attackTriggered
+            });
+            mouse.attackTriggered = false;
         } else {
-            // Modo Solo / Local
+            // Modo Local
             if (this.frameCount < CONFIG.zoneDelayFrames) {
                 let secondsLeft = Math.ceil((CONFIG.zoneDelayFrames - this.frameCount) / 60);
-                if (elements.zoneHud) {
-                    elements.zoneHud.innerHTML = `<i class="fas fa-radiation-alt" style="color: #00d2ff;"></i> FECHA EM: <span>${secondsLeft}s</span>`;
-                }
+                if (elements.zoneHud) elements.zoneHud.innerHTML = `<i class="fas fa-radiation-alt" style="color: #00d2ff;"></i> FECHA EM: <span>${secondsLeft}s</span>`;
             } else {
-                if (elements.zoneHud) {
-                    elements.zoneHud.innerHTML = `<i class="fas fa-radiation-alt" style="color: #ff3d68;"></i> ZONA ENCOLHENDO!`;
-                }
+                if (elements.zoneHud) elements.zoneHud.innerHTML = `<i class="fas fa-radiation-alt" style="color: #ff3d68;"></i> ZONA ENCOLHENDO!`;
                 if (this.zone.radius > 110) this.zone.radius -= CONFIG.zoneShrinkSpeed;
             }
 
@@ -876,7 +829,7 @@ const Game = {
                     if (p.alive && p.id !== t.ownerId && Math.hypot(p.x - t.x, p.y - t.y) < p.radius + t.radius) {
                         p.takeDamage(CONFIG.rangedDamage, t.ownerName);
                         if (t.charId === 'malacor' && p.id === 'P1') {
-                            Game.shakeFrames = 100;
+                            Game.shakeFrames = 120;
                             Game.showWarning("⚠️ MALDIÇÃO DE MALACOR! ⚠️", "rgba(177, 156, 217, 0.9)");
                         }
                         t.life = 0;
@@ -890,21 +843,17 @@ const Game = {
     draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.save();
-
         if (this.shakeFrames > 0) {
             ctx.translate(Math.random() * 10 - 5, Math.random() * 10 - 5);
             this.shakeFrames--;
         }
 
-        // Fundo com máscara da zona de tempestade
-        ctx.fillStyle = "rgba(10, 0, 20, 0.78)";
+        ctx.fillStyle = "rgba(10, 0, 20, 0.75)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
         ctx.arc(this.zone.x, this.zone.y, Math.max(0, this.zone.radius), 0, Math.PI * 2);
         ctx.fill();
-
         ctx.globalCompositeOperation = 'source-over';
         ctx.beginPath();
         ctx.arc(this.zone.x, this.zone.y, Math.max(0, this.zone.radius), 0, Math.PI * 2);
@@ -914,7 +863,6 @@ const Game = {
 
         this.projectiles.forEach(p => p.draw());
         this.players.forEach(p => p.draw());
-
         ctx.restore();
     },
 
@@ -944,16 +892,11 @@ const Game = {
     showRanking(vencedor, customRanking = null) {
         const ranking = customRanking || (vencedor ? [vencedor, ...this.eliminatedOrder.reverse()] : [...this.eliminatedOrder.reverse()]);
         elements.rankingList.innerHTML = '';
-
         ranking.forEach((player, index) => {
             const pos = index + 1;
             const item = document.createElement('div');
             item.className = `rank-item ${pos === 1 ? 'winner' : ''}`;
-            item.innerHTML = `
-                <span class="rank-pos">#${pos}</span>
-                <span class="rank-name" style="color:${player.color}">${player.name}</span>
-                <span class="rank-status">${pos === 1 ? 'VENCEDOR' : 'ELIMINADO'}</span>
-            `;
+            item.innerHTML = `<span class="rank-pos">#${pos}</span><span class="rank-name" style="color:${player.color}">${player.name}</span><span class="rank-status">${pos === 1 ? 'VENCEDOR' : 'MORTO'}</span>`;
             elements.rankingList.appendChild(item);
         });
 
@@ -964,12 +907,12 @@ const Game = {
                 elements.winnerText.innerText = `${vencedor.name} VENCEU!`;
                 elements.winnerText.style.color = vencedor.color;
             }
-        }, 1200);
+        }, 1500);
     }
 };
 
 // ==========================================
-// GERENCIADOR DE CARREGAMENTO (LOADING SCREEN)
+// TELA DE CARREGAMENTO & CONTAGEM
 // ==========================================
 const LoadingManager = {
     progress: 0,
@@ -981,27 +924,29 @@ const LoadingManager = {
     start() {
         Game.active = false;
 
-        // Duração otimizada de 3.5 segundos para agilizar
+        // Ao clicar ou pressionar espaço, pula imediatamente o tutorial
+        const skip = () => {
+            if (this.interval) {
+                clearInterval(this.interval);
+                this.finish();
+            }
+        };
+        window.addEventListener('click', skip, { once: true });
+        window.addEventListener('keydown', (e) => { if (e.code === 'Space') skip(); }, { once: true });
+
+        // Carregamento suave em ~4 segundos
         this.interval = setInterval(() => {
-            this.progress += 2.0;
+            this.progress += 1.6;
 
             if (this.progress >= 100) {
                 this.progress = 100;
                 clearInterval(this.interval);
                 this.updateUI();
-                setTimeout(() => this.finish(), 400);
+                setTimeout(() => this.finish(), 300);
             } else {
                 this.updateUI();
             }
-        }, 70);
-
-        if (elements.btnSkipLoading) {
-            elements.btnSkipLoading.onclick = () => {
-                this.progress = 100;
-                clearInterval(this.interval);
-                this.finish();
-            };
-        }
+        }, 60);
     },
 
     updateUI() {
@@ -1027,7 +972,7 @@ const LoadingManager = {
 };
 
 const CountdownManager = {
-    counter: 3, // 3 segundos para início ágil da batalha
+    counter: 5,
     overlay: document.getElementById('countdown-overlay'),
     numberEl: document.getElementById('countdown-number'),
 
@@ -1040,7 +985,7 @@ const CountdownManager = {
         if (this.counter > 0) {
             this.numberEl.innerText = this.counter;
             this.numberEl.style.animation = 'none';
-            this.numberEl.offsetHeight; // reflow
+            this.numberEl.offsetHeight;
             this.numberEl.style.animation = 'countdownPulse 1s infinite';
 
             this.counter--;
@@ -1052,9 +997,10 @@ const CountdownManager = {
             setTimeout(() => {
                 this.overlay.classList.add('hidden');
                 Game.init();
-            }, 800);
+            }, 1000);
         }
     }
 };
 
+// Inicia carregamento
 window.onload = () => LoadingManager.start();

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Battle Arena - Last One Standing</title>
+    <title>Battle Arena - Menu Principal</title>
     <link rel="stylesheet" href="style-menu.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="shortcut icon" href="assets/logo-los.png" type="image/x-icon">
@@ -15,9 +15,6 @@
         <div class="player-identity">
             <h1 id="player-nickname" contenteditable="true" title="Clique para editar">CATARINO</h1>
             <span class="level-badge">NÍVEL 15</span>
-            <div id="net-status" class="net-status-badge offline" title="Status do Servidor Multiplayer">
-                <i class="fas fa-circle"></i> <span id="net-status-text">OFFLINE</span>
-            </div>
         </div>
 
         <div class="player-wallet">
@@ -50,27 +47,19 @@
 
             <button class="btn-massive-play" id="btn-play">
                 <div class="play-content">
-                    <span class="play-title">SALAS ONLINE</span>
-                    <span class="play-subtitle">Criar sala ou buscar partidas</span>
+                    <span class="play-title">ENTRAR NA ARENA</span>
+                    <span class="play-subtitle">Procurar sala online</span>
                 </div>
-                <i class="fas fa-globe play-icon"></i>
-            </button>
-
-            <button class="btn-massive-play btn-solo-play" id="btn-solo">
-                <div class="play-content">
-                    <span class="play-title">BATALHA VS IA</span>
-                    <span class="play-subtitle">Treino com dificuldade configurável</span>
-                </div>
-                <i class="fas fa-robot play-icon"></i>
+                <i class="fas fa-play play-icon"></i>
             </button>
 
             <div class="floating-menu">
-                <button class="orb-btn" id="btn-ranking">
+                <button class="orb-btn">
                     <div class="orb-icon"><i class="fas fa-trophy"></i></div>
                     <span>Ranking</span>
                 </button>
 
-                <button class="orb-btn" id="btn-options">
+                <button class="orb-btn">
                     <div class="orb-icon"><i class="fas fa-cog"></i></div>
                     <span>Opções</span>
                 </button>
@@ -80,43 +69,37 @@
 
     </main>
 
-    <!-- MODAL PRINCIPAL -->
     <div id="room-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="close-btn" id="close-modal-btn"><i class="fas fa-times"></i></button>
 
             <h2 class="modal-title" id="modal-main-title"><i class="fas fa-globe"></i> ARENA MULTIPLAYER</h2>
 
-            <!-- VIEW 1: LISTA DE SALAS PÚBLICAS -->
             <div id="view-room-list" class="modal-view">
                 <div class="modal-actions">
-                    <button class="btn-create-room" id="btn-show-create">
-                        <i class="fas fa-plus"></i> CRIAR NOVA SALA
-                    </button>
+                    <button class="btn-create-room" id="btn-show-create"><i class="fas fa-plus"></i> CRIAR NOVA
+                        SALA</button>
 
                     <div class="join-code-box">
-                        <input type="text" id="input-room-code" placeholder="Código da sala (ex: A9X2B)..." maxlength="6">
-                        <button class="btn-join-code" id="btn-join-by-code" title="Entrar na Sala"><i class="fas fa-sign-in-alt"></i></button>
+                        <input type="text" placeholder="Código da sala..." maxlength="6">
+                        <button class="btn-join-code"><i class="fas fa-sign-in-alt"></i></button>
                     </div>
                 </div>
 
                 <div class="public-rooms">
-                    <div class="public-rooms-header">
-                        <h3>SALAS PÚBLICAS DISPONÍVEIS</h3>
-                        <button class="btn-refresh-rooms" id="btn-refresh-rooms" title="Atualizar Lista"><i class="fas fa-sync-alt"></i> Atualizar</button>
-                    </div>
+                    <h3>SALAS PÚBLICAS ABERTAS</h3>
                     <ul class="room-list" id="room-list">
                     </ul>
                 </div>
             </div>
 
-            <!-- VIEW 2: CRIAR SALA -->
             <div id="view-create-room" class="modal-view hidden">
                 <div class="create-form">
 
                     <div class="form-group">
                         <label>Nome da Sala</label>
-                        <input type="text" id="new-room-name" placeholder="Ex: Treino da Galera..." value="Arena dos Campeões">
+                        <input type="text" id="new-room-name" placeholder="Ex: Treino da Galera..."
+                            value="Sala Privada">
                     </div>
 
                     <div class="form-row">
@@ -134,29 +117,9 @@
                             <select id="new-room-players">
                                 <option value="2">2 Jogadores</option>
                                 <option value="4" selected>4 Jogadores</option>
-                                <option value="6">6 Jogadores</option>
                                 <option value="8">8 Jogadores</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group flex-1">
-                            <label>Dificuldade da IA dos Bots</label>
-                            <select id="new-room-bot-diff">
-                                <option value="recruit">Recruta (Fácil)</option>
-                                <option value="veteran" selected>Veterano (Normal)</option>
-                                <option value="master">Mestre (Difícil - Esquiva & Kiting)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group checkbox-group">
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="new-room-fill-bots" checked>
-                            <span class="slider"></span>
-                        </label>
-                        <span class="toggle-label"><i class="fas fa-robot"></i> Preencher vagas vazias com Bots</span>
                     </div>
 
                     <div class="form-group checkbox-group">
@@ -164,86 +127,19 @@
                             <input type="checkbox" id="new-room-private">
                             <span class="slider"></span>
                         </label>
-                        <span class="toggle-label"><i class="fas fa-lock"></i> Sala Privada (Apenas com Código)</span>
+                        <span class="toggle-label"><i class="fas fa-lock"></i> Sala Privada (Gerar Código)</span>
                     </div>
 
                     <div class="create-actions">
-                        <button class="btn-secondary" id="btn-cancel-create">VOLTAR</button>
-                        <button class="btn-primary" id="btn-confirm-create">CRIAR SALA <i class="fas fa-rocket"></i></button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- VIEW 3: LOBBY DA SALA (SAGUÃO) -->
-            <div id="view-room-lobby" class="modal-view hidden">
-                <div class="lobby-header-panel">
-                    <div class="lobby-info">
-                        <h3 id="lobby-room-name">Nome da Sala</h3>
-                        <p><i class="fas fa-map-marker-alt"></i> <span id="lobby-map-name">Hexágono Cósmico</span> | <span id="lobby-capacity-info">1/4 Jogadores</span></p>
-                    </div>
-                    <div class="lobby-code-badge" id="btn-copy-code" title="Clique para copiar código">
-                        <span class="code-label">CÓDIGO:</span>
-                        <strong id="lobby-room-code">------</strong>
-                        <i class="fas fa-copy"></i>
-                    </div>
-                </div>
-
-                <div class="lobby-players-section">
-                    <h4>JOGADORES NA SALA</h4>
-                    <div class="lobby-players-grid" id="lobby-players-grid">
-                        <!-- Gerado dinamicamente -->
-                    </div>
-                </div>
-
-                <div class="lobby-actions">
-                    <button class="btn-secondary" id="btn-leave-lobby"><i class="fas fa-door-open"></i> SAIR</button>
-                    <button class="btn-secondary" id="btn-add-bot"><i class="fas fa-plus-circle"></i> + BOT</button>
-                    <button class="btn-ready" id="btn-toggle-ready"><i class="fas fa-check"></i> PRONTO</button>
-                    <button class="btn-primary btn-start-match" id="btn-start-match"><i class="fas fa-play"></i> INICIAR BATALHA</button>
-                </div>
-            </div>
-
-            <!-- VIEW 4: TREINO SOLO VS IA -->
-            <div id="view-solo-setup" class="modal-view hidden">
-                <div class="create-form">
-                    <div class="form-group">
-                        <label>Dificuldade da Inteligência Artificial</label>
-                        <select id="solo-difficulty">
-                            <option value="recruit">Recruta (Fácil - Ideal para iniciantes)</option>
-                            <option value="veteran" selected>Veterano (Normal - Comportamento tático)</option>
-                            <option value="master">Mestre (Difícil - Esquiva a 90°, mira preditiva e kiting)</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Número de Oponentes (Bots)</label>
-                        <select id="solo-bot-count">
-                            <option value="1">Duelo 1 vs 1 (1 Bot)</option>
-                            <option value="3">Mini Arena (3 Bots)</option>
-                            <option value="5" selected>Battle Royale Completo (5 Bots)</option>
-                        </select>
-                    </div>
-
-                    <div class="create-actions">
-                        <button class="btn-secondary" id="btn-cancel-solo">VOLTAR</button>
-                        <button class="btn-primary" id="btn-start-solo">ENTRAR NA ARENA <i class="fas fa-fire"></i></button>
+                        <button class="btn-secondary" id="btn-cancel-create">CANCELAR</button>
+                        <button class="btn-primary" id="btn-confirm-create">CRIAR E ENTRAR <i
+                                class="fas fa-rocket"></i></button>
                     </div>
                 </div>
             </div>
 
         </div>
     </div>
-
-    <!-- Scripts -->
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        // Fallback caso não carregue do mesmo domínio
-        if (typeof io === 'undefined') {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
-            document.head.appendChild(script);
-        }
-    </script>
     <script src="script-menu.js"></script>
 </body>
 
