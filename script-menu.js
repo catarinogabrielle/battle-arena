@@ -19,8 +19,10 @@ const nickElement = document.getElementById('player-nickname');
 
 // Carrega nickname salvo se houver
 const savedPlayer = JSON.parse(localStorage.getItem('arenaPlayer') || '{}');
-if (savedPlayer.nickname && nickElement) {
-    nickElement.innerText = savedPlayer.nickname;
+const playerInfo = JSON.parse(localStorage.getItem('arenaPlayerInfo') || '{}');
+const activeNickname = savedPlayer.nickname || playerInfo.username;
+if (activeNickname && nickElement) {
+    nickElement.innerText = activeNickname;
 }
 if (savedPlayer.charId) {
     const idx = characters.findIndex(c => c.id === savedPlayer.charId);
@@ -132,6 +134,25 @@ if (btnInstallPwa) {
                 alert('💡 Para instalar o App:\nNo Chrome ou Edge, clique no ícone de instalar na barra de navegação ou no menu de 3 pontos > "Instalar Battle Arena".');
             }
         }
+    });
+}
+
+const btnOptions = document.getElementById('btn-options');
+if (btnOptions) {
+    btnOptions.addEventListener('click', () => {
+        const currentUser = (nickElement ? nickElement.innerText.trim() : 'Jogador');
+        const action = confirm(`⚙️ OPÇÕES DE CONTA\n\nJogador atual: ${currentUser}\n\nDeseja sair da conta e ir para a Tela de Login?`);
+        if (action) {
+            localStorage.removeItem('ygaming_token');
+            window.location.href = 'login.html';
+        }
+    });
+}
+
+const btnRanking = document.getElementById('btn-ranking');
+if (btnRanking) {
+    btnRanking.addEventListener('click', () => {
+        alert('🏆 RANKING GLOBAL (Temporada 1)\n\n1º - CATARINO (2.850 pts)\n2º - SHADOW_BLADE (2.610 pts)\n3º - VALKYRIE (2.420 pts)\n4º - PHOENIX (2.190 pts)\n\nJogue partidas ranqueadas na Arena para subir na tabela!');
     });
 }
 

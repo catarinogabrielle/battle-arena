@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Battle Arena - Menu Principal</title>
+    <title>Battle Arena - Login</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00d2ff">
     <meta name="mobile-web-app-capable" content="yes">
@@ -14,146 +14,155 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/logo-los.png">
     <link rel="shortcut icon" type="image/png" href="assets/logo-los.png">
     <link rel="apple-touch-icon" href="assets/logo-los.png">
-    <link rel="stylesheet" href="style-menu.css">
+    <link rel="stylesheet" href="style-login.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        #login-error {
+            color: #ff3d68;
+            font-size: 0.9em;
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+            display: none;
+            background: rgba(255, 61, 104, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ff3d68;
+        }
+
+        .saved-account-box {
+            display: none;
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            background: rgba(0, 210, 255, 0.08);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .btn-continue-saved {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            padding: 8px 18px;
+            background: linear-gradient(90deg, #00d2ff 0%, #00ff88 100%);
+            color: #050b14;
+            font-weight: bold;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.95em;
+            transition: 0.2s;
+        }
+
+        .btn-continue-saved:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
+        }
+    </style>
 </head>
 
 <body>
-    <header class="player-hud">
-        <div class="player-identity">
-            <h1 id="player-nickname" contenteditable="true" title="Clique para editar">CATARINO</h1>
-            <span class="level-badge">NÍVEL 15</span>
+    <div class="login-container">
+        <div class="game-logo">
+            <img src="assets/logo-los.png" alt="Last One Standing Logo">
         </div>
 
-        <div class="player-wallet">
-            <div class="currency coin">
-                <i class="fas fa-coins"></i> 1.250
-            </div>
-            <div class="currency gem">
-                <i class="far fa-gem"></i> 45
-            </div>
-        </div>
-    </header>
-
-    <main class="cosmos-container">
-
-        <section class="character-showcase">
-            <div class="glow-backdrop"></div>
-
-            <img src="assets/kaelen.png" alt="Personagem" id="main-hero-img" class="hero-render">
-
-            <div class="hero-details">
-                <p class="hero-class" id="main-hero-class">GUERREIRO DO SOL</p>
-                <h2 class="hero-name" id="main-hero-name">KAELEN</h2>
+        <div class="login-panel" id="main-panel">
+            <div id="saved-session" class="saved-account-box">
+                <span style="color: #8892b0; font-size: 0.85em;">Sessão anterior encontrada</span>
+                <br>
+                <a href="menu.html" class="btn-continue-saved" id="btn-continue">
+                    Continuar como <span id="saved-name">Jogador</span> <i class="fas fa-arrow-right"></i>
+                </a>
             </div>
 
-            <div class="character-roster" id="roster-container">
-            </div>
-        </section>
-
-        <section class="action-nexus">
-
-            <button class="btn-massive-play" id="btn-play">
-                <div class="play-content">
-                    <span class="play-title">ENTRAR NA ARENA</span>
-                    <span class="play-subtitle">Procurar sala online</span>
+            <form id="login-form">
+                <div class="input-group">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" id="email" placeholder="name@example.com" required>
                 </div>
-                <i class="fas fa-play play-icon"></i>
-            </button>
 
-            <div class="floating-menu">
-                <button class="orb-btn" id="btn-install-pwa" title="Instalar aplicativo Battle Arena">
-                    <div class="orb-icon"><i class="fas fa-download"></i></div>
-                    <span>Instalar App</span>
+                <div class="input-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="password" placeholder="********" required>
+                </div>
+
+                <button type="submit" class="login-button" id="btn-submit">
+                    LOGIN <i class="fas fa-chevron-right button-arrow"></i>
                 </button>
 
-                <button class="orb-btn">
-                    <div class="orb-icon"><i class="fas fa-trophy"></i></div>
-                    <span>Ranking</span>
-                </button>
+                <div id="login-error">Erro ao conectar!</div>
+            </form>
 
-                <button class="orb-btn">
-                    <div class="orb-icon"><i class="fas fa-cog"></i></div>
-                    <span>Opções</span>
-                </button>
+            <div class="login-links" style="justify-content: center;">
+                <a href="#">ESQUECEU A SENHA?</a>
             </div>
-
-        </section>
-
-    </main>
-
-    <div id="room-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <button class="close-btn" id="close-modal-btn"><i class="fas fa-times"></i></button>
-
-            <h2 class="modal-title" id="modal-main-title"><i class="fas fa-globe"></i> ARENA MULTIPLAYER</h2>
-
-            <div id="view-room-list" class="modal-view">
-                <div class="modal-actions">
-                    <button class="btn-create-room" id="btn-show-create"><i class="fas fa-plus"></i> CRIAR NOVA
-                        SALA</button>
-
-                    <div class="join-code-box">
-                        <input type="text" placeholder="Código da sala..." maxlength="6">
-                        <button class="btn-join-code"><i class="fas fa-sign-in-alt"></i></button>
-                    </div>
-                </div>
-
-                <div class="public-rooms">
-                    <h3>SALAS PÚBLICAS ABERTAS</h3>
-                    <ul class="room-list" id="room-list">
-                    </ul>
-                </div>
-            </div>
-
-            <div id="view-create-room" class="modal-view hidden">
-                <div class="create-form">
-
-                    <div class="form-group">
-                        <label>Nome da Sala</label>
-                        <input type="text" id="new-room-name" placeholder="Ex: Treino da Galera..."
-                            value="Sala Privada">
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group flex-1">
-                            <label>Selecionar Mapa</label>
-                            <select id="new-room-map">
-                                <option value="Hexágono Cósmico">Hexágono Cósmico</option>
-                                <option value="Abismo Escuro">Abismo Escuro</option>
-                                <option value="Ruínas Antigas">Ruínas Antigas</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Máx. Jogadores</label>
-                            <select id="new-room-players">
-                                <option value="2">2 Jogadores</option>
-                                <option value="4" selected>4 Jogadores</option>
-                                <option value="8">8 Jogadores</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group checkbox-group">
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="new-room-private">
-                            <span class="slider"></span>
-                        </label>
-                        <span class="toggle-label"><i class="fas fa-lock"></i> Sala Privada (Gerar Código)</span>
-                    </div>
-
-                    <div class="create-actions">
-                        <button class="btn-secondary" id="btn-cancel-create">CANCELAR</button>
-                        <button class="btn-primary" id="btn-confirm-create">CRIAR E ENTRAR <i
-                                class="fas fa-rocket"></i></button>
-                    </div>
-                </div>
-            </div>
-
         </div>
     </div>
-    <script src="script-menu.js"></script>
+
+    <script>
+        // Registro do Service Worker PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js').catch(err => console.log('SW falhou:', err));
+            });
+        }
+
+        // Verifica sessão existente para facilitar retorno
+        try {
+            const token = localStorage.getItem('ygaming_token');
+            const playerInfo = JSON.parse(localStorage.getItem('arenaPlayerInfo') || '{}');
+            const arenaPlayer = JSON.parse(localStorage.getItem('arenaPlayer') || '{}');
+            const name = playerInfo.username || arenaPlayer.nickname;
+            if (token && name) {
+                const box = document.getElementById('saved-session');
+                const nameSpan = document.getElementById('saved-name');
+                if (box && nameSpan) {
+                    nameSpan.innerText = name;
+                    box.style.display = 'block';
+                }
+            }
+        } catch (e) {}
+
+        document.getElementById('login-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const btn = document.getElementById('btn-submit');
+            const errorDiv = document.getElementById('login-error');
+
+            errorDiv.style.display = 'none';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> AUTENTICANDO...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                const defaultName = (email.split('@')[0] || 'CATARINO').toUpperCase();
+                const mockPlayer = {
+                    id: "los_" + Date.now().toString(36),
+                    username: defaultName,
+                    email: email,
+                    coins: 1250,
+                    level: 15,
+                    avatar: ""
+                };
+
+                localStorage.setItem('ygaming_token', 'token_' + Date.now());
+                localStorage.setItem('arenaPlayerInfo', JSON.stringify(mockPlayer));
+
+                const existingPlayer = JSON.parse(localStorage.getItem('arenaPlayer') || '{}');
+                existingPlayer.nickname = defaultName;
+                localStorage.setItem('arenaPlayer', JSON.stringify(existingPlayer));
+
+                btn.innerHTML = '<i class="fas fa-check"></i> CONECTADO!';
+
+                setTimeout(() => {
+                    window.location.href = 'menu.html';
+                }, 400);
+
+            }, 800);
+        });
+    </script>
 </body>
 
 </html>
