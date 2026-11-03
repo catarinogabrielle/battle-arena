@@ -3,10 +3,11 @@
  * Permite funcionamento offline (PWA) e cache acelerado de assets
  */
 
-const CACHE_NAME = 'battle-arena-v1.2';
+const CACHE_NAME = 'battle-arena-v1.3';
 
 const STATIC_ASSETS = [
     './',
+    './index.html',
     './login.html',
     './menu.html',
     './arena.html',
@@ -16,6 +17,7 @@ const STATIC_ASSETS = [
     './script-menu.js',
     './script-arena.js',
     './manifest.json',
+    './favicon.ico',
     './assets/logo-los.png',
     './assets/fundo.png',
     './assets/fundo-arena.png',
