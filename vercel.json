@@ -18,8 +18,8 @@
     { "src": "/arena.html", "dest": "/arena.html" },
     { "src": "/login.html", "dest": "/login.html" },
     { "src": "/menu.html", "dest": "/menu.html" },
-    { "src": "/index.html", "dest": "/menu.html" },
-    { "src": "/", "dest": "server.js" },
+    { "src": "/index.html", "dest": "/index.html" },
+    { "src": "/", "dest": "/index.html" },
     { "src": "/(.*)", "dest": "server.js" }
   ]
 }

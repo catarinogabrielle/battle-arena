@@ -29,9 +29,10 @@ app.get('/service-worker.js', (req, res) => res.sendFile(path.join(__dirname, 's
 app.get('/favicon.ico', (req, res) => res.sendFile(path.join(__dirname, 'favicon.ico')));
 app.get('/assets/:file', (req, res) => res.sendFile(path.join(__dirname, 'assets', req.params.file)));
 app.get('/menu.html', (req, res) => res.sendFile(path.join(__dirname, 'menu.html')));
+app.get('/index.html', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/arena.html', (req, res) => res.sendFile(path.join(__dirname, 'arena.html')));
 app.get('/login.html', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'menu.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 // ========================================================
 // GERENCIADOR DE SALAS E MULTIPLAYER AUTORITATIVO

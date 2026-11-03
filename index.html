@@ -1,17 +1,159 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0; url=menu.html">
-    <title>Battle Arena: Last One Standing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Battle Arena - Menu Principal</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#00d2ff">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="icon" type="image/png" href="assets/logo-los.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/logo-los.png">
+    <link rel="shortcut icon" type="image/png" href="assets/logo-los.png">
     <link rel="apple-touch-icon" href="assets/logo-los.png">
-    <script>
-        window.location.replace("menu.html");
-    </script>
+    <link rel="stylesheet" href="style-menu.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
-    <p>Carregando Battle Arena... <a href="menu.html">Clique aqui</a> se não for redirecionado automaticamente.</p>
+    <header class="player-hud">
+        <div class="player-identity">
+            <h1 id="player-nickname" contenteditable="true" title="Clique para editar">CATARINO</h1>
+            <span class="level-badge">NÍVEL 15</span>
+        </div>
+
+        <div class="player-wallet">
+            <div class="currency coin">
+                <i class="fas fa-coins"></i> 1.250
+            </div>
+            <div class="currency gem">
+                <i class="far fa-gem"></i> 45
+            </div>
+        </div>
+    </header>
+
+    <main class="cosmos-container">
+
+        <section class="character-showcase">
+            <div class="glow-backdrop"></div>
+
+            <img src="assets/kaelen.png" alt="Personagem" id="main-hero-img" class="hero-render">
+
+            <div class="hero-details">
+                <p class="hero-class" id="main-hero-class">GUERREIRO DO SOL</p>
+                <h2 class="hero-name" id="main-hero-name">KAELEN</h2>
+            </div>
+
+            <div class="character-roster" id="roster-container">
+            </div>
+        </section>
+
+        <section class="action-nexus">
+
+            <button class="btn-massive-play" id="btn-play">
+                <div class="play-content">
+                    <span class="play-title">ENTRAR NA ARENA</span>
+                    <span class="play-subtitle">Procurar sala online</span>
+                </div>
+                <i class="fas fa-play play-icon"></i>
+            </button>
+
+            <div class="floating-menu">
+                <button class="orb-btn" id="btn-install-pwa" title="Instalar aplicativo Battle Arena">
+                    <div class="orb-icon"><i class="fas fa-download"></i></div>
+                    <span>Instalar App</span>
+                </button>
+
+                <button class="orb-btn">
+                    <div class="orb-icon"><i class="fas fa-trophy"></i></div>
+                    <span>Ranking</span>
+                </button>
+
+                <button class="orb-btn">
+                    <div class="orb-icon"><i class="fas fa-cog"></i></div>
+                    <span>Opções</span>
+                </button>
+            </div>
+
+        </section>
+
+    </main>
+
+    <div id="room-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="close-btn" id="close-modal-btn"><i class="fas fa-times"></i></button>
+
+            <h2 class="modal-title" id="modal-main-title"><i class="fas fa-globe"></i> ARENA MULTIPLAYER</h2>
+
+            <div id="view-room-list" class="modal-view">
+                <div class="modal-actions">
+                    <button class="btn-create-room" id="btn-show-create"><i class="fas fa-plus"></i> CRIAR NOVA
+                        SALA</button>
+
+                    <div class="join-code-box">
+                        <input type="text" placeholder="Código da sala..." maxlength="6">
+                        <button class="btn-join-code"><i class="fas fa-sign-in-alt"></i></button>
+                    </div>
+                </div>
+
+                <div class="public-rooms">
+                    <h3>SALAS PÚBLICAS ABERTAS</h3>
+                    <ul class="room-list" id="room-list">
+                    </ul>
+                </div>
+            </div>
+
+            <div id="view-create-room" class="modal-view hidden">
+                <div class="create-form">
+
+                    <div class="form-group">
+                        <label>Nome da Sala</label>
+                        <input type="text" id="new-room-name" placeholder="Ex: Treino da Galera..."
+                            value="Sala Privada">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label>Selecionar Mapa</label>
+                            <select id="new-room-map">
+                                <option value="Hexágono Cósmico">Hexágono Cósmico</option>
+                                <option value="Abismo Escuro">Abismo Escuro</option>
+                                <option value="Ruínas Antigas">Ruínas Antigas</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Máx. Jogadores</label>
+                            <select id="new-room-players">
+                                <option value="2">2 Jogadores</option>
+                                <option value="4" selected>4 Jogadores</option>
+                                <option value="8">8 Jogadores</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="new-room-private">
+                            <span class="slider"></span>
+                        </label>
+                        <span class="toggle-label"><i class="fas fa-lock"></i> Sala Privada (Gerar Código)</span>
+                    </div>
+
+                    <div class="create-actions">
+                        <button class="btn-secondary" id="btn-cancel-create">CANCELAR</button>
+                        <button class="btn-primary" id="btn-confirm-create">CRIAR E ENTRAR <i
+                                class="fas fa-rocket"></i></button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <script src="script-menu.js"></script>
 </body>
+
 </html>
