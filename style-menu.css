@@ -1730,36 +1730,173 @@ kbd {
         font-size: 0.72em;
     }
 
-    /* Modais compactos no Mobile */
+    /* Modais compactos, proporcionais e bem espaçados no Mobile Paisagem */
     .modal-content {
-        padding: 15px 18px;
+        padding: 12px 16px;
         border-radius: 14px;
-        max-height: 94vh;
-        max-height: 94dvh;
+        max-height: 92vh;
+        max-height: 92dvh;
+    }
+
+    .modal-title {
+        font-size: 1.15em;
+        margin-bottom: 4px;
     }
 
     .modal-header-tabs {
-        margin-bottom: 10px;
-        padding-bottom: 8px;
+        margin-bottom: 8px;
+        padding-bottom: 6px;
     }
 
     .modal-tab {
-        padding: 6px 10px;
-        font-size: 0.85em;
+        padding: 5px 10px;
+        font-size: 0.8em;
     }
 
     .modal-actions-bar {
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
 
     .room-list {
-        max-height: 110px;
+        max-height: 120px;
     }
 
+    /* Guia de controles lado a lado (2 colunas) sem ficar apertado */
     .guide-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .guide-card {
+        padding: 10px 12px;
+    }
+
+    .guide-card-header {
+        font-size: 0.82em;
+        margin-bottom: 6px;
+    }
+
+    .guide-list {
+        font-size: 0.74em;
+        gap: 4px;
+    }
+
+    .guide-tips-box {
+        padding: 8px 10px;
+        font-size: 0.74em;
+    }
+
+    /* Popups de Nickname e Avisos proporcionais no Mobile */
+    .nick-modal-content {
+        max-width: 390px;
+        padding: 14px 18px;
+    }
+
+    .nick-modal-header {
+        gap: 4px;
+        margin-bottom: 10px;
+    }
+
+    .nick-modal-avatar-wrap {
+        width: 46px;
+        height: 46px;
+    }
+
+    .nick-modal-subtitle {
+        font-size: 0.74em;
+    }
+
+    .nick-modal-body {
+        margin-bottom: 12px;
+        gap: 5px;
+    }
+
+    .nick-modal-input-box {
+        padding: 7px 10px;
+    }
+
+    .nick-modal-input-box input {
+        font-size: 0.95em;
+    }
+
+    .btn-random-nick {
+        width: 38px;
+        height: 38px;
+    }
+
+    .custom-popup-content {
+        max-width: 350px;
+        padding: 16px 20px;
         gap: 8px;
     }
+
+    .custom-popup-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 1.25em;
+    }
+
+    .custom-popup-title {
+        font-size: 1.02em;
+    }
+
+    .custom-popup-msg {
+        font-size: 0.82em;
+        margin-bottom: 4px;
+    }
+
+    /* Ranking compacto no Mobile */
+    .ranking-subtitle {
+        font-size: 0.75em;
+        margin-bottom: 10px;
+    }
+
+    .ranking-podium {
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .podium-card {
+        padding: 7px 6px;
+    }
+
+    .podium-avatar {
+        width: 32px;
+        height: 32px;
+    }
+
+    .ranking-table {
+        font-size: 0.76em;
+    }
+
+    .ranking-table th,
+    .ranking-table td {
+        padding: 5px 8px;
+    }
+}
+
+/* ======================================================== */
+/* CONTAINER INTEGRADO DA ARENA (MANTÉM MODO TELA CHEIA)    */
+/* ======================================================== */
+.arena-embed-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: #000;
+    z-index: 950000;
+    overflow: hidden;
+}
+
+.arena-embed-overlay iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    background: #000;
 }
 
 /* ======================================================== */

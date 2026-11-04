@@ -28,48 +28,65 @@
 <body>
     <div id="loading-screen" class="overlay-screen">
         <div class="tutorial-wrapper">
-            <h1 class="tutorial-title">COMO JOGAR NA ARENA</h1>
+            <div class="tutorial-badge"><i class="fas fa-bolt"></i> PREPARANDO COMBATE</div>
+            <h1 class="tutorial-title">GUIA RÁPIDO DE CONTROLES</h1>
 
             <div class="tutorial-panels">
-                <div class="tutorial-box" id="tutorial-pc-box">
-                    <div class="box-header"><i class="fas fa-desktop"></i> COMPUTADOR (PC)</div>
-                    <div class="keyboard-layout">
-                        <div class="key-group">
-                            <div class="key-row">
-                                <div class="key hidden"></div>
-                                <div class="key active-key">W</div>
-                                <div class="key hidden"></div>
+                <!-- Exibido em Computadores (Desktop) -->
+                <div class="tutorial-box tutorial-pc-only" id="tutorial-pc-box">
+                    <div class="box-header"><i class="fas fa-keyboard"></i> TECLADO &amp; MOUSE</div>
+                    <div class="pc-controls-row">
+                        <div class="pc-control-col">
+                            <div class="key-group">
+                                <div class="key-row">
+                                    <div class="key hidden"></div>
+                                    <div class="key active-key">W</div>
+                                    <div class="key hidden"></div>
+                                </div>
+                                <div class="key-row">
+                                    <div class="key active-key">A</div>
+                                    <div class="key active-key">S</div>
+                                    <div class="key active-key">D</div>
+                                </div>
                             </div>
-                            <div class="key-row">
-                                <div class="key active-key">A</div>
-                                <div class="key active-key">S</div>
-                                <div class="key active-key">D</div>
-                            </div>
+                            <div class="key-desc"><strong>W, A, S, D</strong><br>Mover em 360°</div>
                         </div>
-                        <div class="key-desc">MOVER EM 360°</div>
 
-                        <div class="key spacebar active-key">ESPAÇO</div>
-                        <div class="key-desc">CORRER (SPRINT) &bull; CLIQUE: ATACAR</div>
+                        <div class="pc-control-col">
+                            <div class="key spacebar active-key">ESPAÇO</div>
+                            <div class="key-desc"><strong>BARRA DE ESPAÇO</strong><br>Correr (Sprint Rápido)</div>
+                        </div>
+
+                        <div class="pc-control-col">
+                            <div class="pc-mouse-icon"><i class="fas fa-crosshairs"></i></div>
+                            <div class="key-desc"><strong>MOUSE + CLIQUE</strong><br>Mirar e Atacar</div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="tutorial-box" id="tutorial-mobile-box">
-                    <div class="box-header"><i class="fas fa-mobile-alt"></i> CELULAR (TOUCH)</div>
-                    <div class="mouse-layout">
-                        <div class="mobile-guide-icons">
-                            <div class="mobile-guide-item">
-                                <span class="mg-circle mg-joy"><i class="fas fa-arrows-alt"></i></span>
-                                <div class="desc-item">
-                                    <span class="highlight-text">JOYSTICK ESQUERDO</span>
-                                    <span class="sub-text">Arraste em 360° para Mover</span>
-                                </div>
+                <!-- Exibido em Celulares e Tablets (Touch) -->
+                <div class="tutorial-box tutorial-mobile-only" id="tutorial-mobile-box">
+                    <div class="box-header"><i class="fas fa-gamepad"></i> CONTROLES NA TELA (TOUCH)</div>
+                    <div class="mobile-guide-grid">
+                        <div class="mobile-guide-card">
+                            <span class="mg-circle mg-joy"><i class="fas fa-arrows-alt"></i></span>
+                            <div class="desc-item">
+                                <span class="highlight-text">MOVER (360°)</span>
+                                <span class="sub-text">Arraste o joystick no canto esquerdo</span>
                             </div>
-                            <div class="mobile-guide-item">
-                                <span class="mg-circle mg-atk"><i class="fas fa-crosshairs"></i></span>
-                                <div class="desc-item">
-                                    <span class="highlight-text">BOTÕES À DIREITA</span>
-                                    <span class="sub-text">Vermelho: Atacar (Mira Auto) &bull; Azul: Correr</span>
-                                </div>
+                        </div>
+                        <div class="mobile-guide-card">
+                            <span class="mg-circle mg-sprint"><i class="fas fa-running"></i></span>
+                            <div class="desc-item">
+                                <span class="highlight-text">CORRER (SPRINT)</span>
+                                <span class="sub-text">Segure o botão azul à direita</span>
+                            </div>
+                        </div>
+                        <div class="mobile-guide-card">
+                            <span class="mg-circle mg-atk"><i class="fas fa-crosshairs"></i></span>
+                            <div class="desc-item">
+                                <span class="highlight-text">ATACAR (MIRA AUTO)</span>
+                                <span class="sub-text">Toque ou arraste o botão vermelho</span>
                             </div>
                         </div>
                     </div>
@@ -82,6 +99,7 @@
                 <div id="loading-bar-fill" class="loading-bar-fill"></div>
             </div>
             <div id="loading-text" class="loading-text">CARREGANDO ARENA... 0%</div>
+            <div class="loading-skip-hint">Toque na tela ou pressione ESPAÇO para iniciar</div>
         </div>
     </div>
 
@@ -90,18 +108,23 @@
     </div>
 
     <div id="damage-overlay"></div>
-    <div id="spectator-ui" class="hidden">MODO ESPECTADOR</div>
+    <div id="spectator-ui" class="hidden"><i class="fas fa-eye"></i> MODO ESPECTADOR</div>
     <div id="spell-warning" class="hidden">⚠️ AVISO!</div>
 
     <header class="hud-top">
-        <button class="btn-leave" onclick="window.location.href='index.html'">
+        <button class="btn-leave" id="btn-leave-match" type="button">
             <i class="fas fa-sign-out-alt"></i> SAIR
         </button>
         <div class="hud-zone">
             <i class="fas fa-radiation-alt" style="color: #ff3d68;"></i> ZONA ATIVA
         </div>
-        <div class="hud-alive">
-            <i class="fas fa-users"></i> VIVOS: <span id="alive-count" class="highlight">6</span>
+        <div class="hud-top-right">
+            <div class="hud-alive">
+                <i class="fas fa-users"></i> VIVOS: <span id="alive-count" class="highlight">6</span>
+            </div>
+            <button class="btn-hud-fullscreen" id="btn-arena-fullscreen" type="button" title="Tela Cheia">
+                <i class="fas fa-expand" id="arena-fs-icon"></i>
+            </button>
         </div>
     </header>
 
@@ -154,18 +177,36 @@
     </div>
 
     <div id="game-over-screen" class="hidden overlay-screen">
-        <h2 class="victory-title">PARTIDA FINALIZADA</h2>
-        <h1 id="winner-text">ALGUÉM VENCEU!</h1>
+        <div class="game-over-card">
+            <h2 class="victory-title">PARTIDA FINALIZADA</h2>
+            <h1 id="winner-text">ALGUÉM VENCEU!</h1>
 
-        <div class="ranking-container">
-            <h3>RANKING DA PARTIDA</h3>
-            <div id="ranking-list"></div>
+            <div class="ranking-container">
+                <h3>RANKING DA PARTIDA</h3>
+                <div id="ranking-list"></div>
+            </div>
+
+            <div class="end-actions">
+                <button class="btn-play-again" onclick="window.location.reload()">
+                    <i class="fas fa-redo"></i> JOGAR NOVAMENTE
+                </button>
+                <button class="btn-menu" onclick="closeArenaToMenu()">
+                    <i class="fas fa-home"></i> VOLTAR AO MENU
+                </button>
+            </div>
         </div>
+    </div>
 
-        <div class="end-actions">
-            <button class="btn-play-again" onclick="window.location.reload()"><i class="fas fa-redo"></i> JOGAR
-                NOVAMENTE</button>
-            <button class="btn-menu" onclick="window.location.href='index.html'">MENU</button>
+    <!-- POPUP PERSONALIZADO DE CONFIRMAÇÃO AO SAIR DA PARTIDA -->
+    <div id="leave-confirm-modal" class="hidden overlay-screen leave-modal-overlay">
+        <div class="leave-modal-box">
+            <div class="leave-modal-icon"><i class="fas fa-sign-out-alt"></i></div>
+            <h3>ABANDONAR BATALHA?</h3>
+            <p>Deseja realmente sair da arena e voltar ao menu principal?</p>
+            <div class="leave-modal-actions">
+                <button id="btn-cancel-leave" class="btn-leave-cancel" type="button">CONTINUAR</button>
+                <button id="btn-confirm-leave" class="btn-leave-confirm" type="button">SAIR</button>
+            </div>
         </div>
     </div>
 

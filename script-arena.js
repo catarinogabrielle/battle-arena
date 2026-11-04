@@ -1247,11 +1247,15 @@ const Game = {
     },
 
     addKillMsg(name, killer, color) {
+        if (!elements.killFeed) return;
+        while (elements.killFeed.children.length >= 3) {
+            elements.killFeed.firstElementChild.remove();
+        }
         const div = document.createElement('div');
         div.className = 'feed-item';
-        div.innerHTML = `<span style="color:${color}">${name}</span> eliminado por <b>${killer}</b>`;
+        div.innerHTML = `<span style="color:${color}">${name}</span> &bull; <b>${killer}</b>`;
         elements.killFeed.appendChild(div);
-        setTimeout(() => div.remove(), 4500);
+        setTimeout(() => { if (div.parentNode) div.remove(); }, 3000);
     },
 
     checkWin() {
@@ -1352,11 +1356,97 @@ const Game = {
 };
 
 // ==========================================
+// NAVEGAÇÃO SEGURA & PRESERVAÇÃO DO MODO DE JOGO (TELA CHEIA)
+// ==========================================
+function tryLockLandscape() {
+    try {
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {});
+        }
+    } catch (e) {}
+}
+
+function requestArenaFullscreen() {
+    try {
+        const targetWin = (window.parent && window.parent !== window) ? window.parent : window;
+        const doc = targetWin.document.documentElement;
+        if (!targetWin.document.fullscreenElement) {
+            if (doc.requestFullscreen) {
+                doc.requestFullscreen().then(tryLockLandscape).catch(tryLockLandscape);
+            } else if (doc.webkitRequestFullscreen) {
+                doc.webkitRequestFullscreen();
+                tryLockLandscape();
+            } else {
+                tryLockLandscape();
+            }
+        } else {
+            tryLockLandscape();
+        }
+    } catch (e) {
+        tryLockLandscape();
+    }
+}
+
+window.closeArenaToMenu = function () {
+    try {
+        if (window.parent && window.parent !== window && typeof window.parent.closeArenaEmbed === 'function') {
+            window.parent.closeArenaEmbed();
+            return;
+        }
+    } catch (e) {}
+    window.location.href = 'index.html';
+};
+
+// Confirmação ao clicar em SAIR (Evita toques acidentais no canto superior no mobile)
+const btnLeaveMatch = document.getElementById('btn-leave-match');
+const leaveConfirmModal = document.getElementById('leave-confirm-modal');
+const btnCancelLeave = document.getElementById('btn-cancel-leave');
+const btnConfirmLeave = document.getElementById('btn-confirm-leave');
+
+if (btnLeaveMatch && leaveConfirmModal) {
+    btnLeaveMatch.addEventListener('click', (e) => {
+        e.stopPropagation();
+        leaveConfirmModal.classList.remove('hidden');
+    });
+}
+if (btnCancelLeave && leaveConfirmModal) {
+    btnCancelLeave.addEventListener('click', (e) => {
+        e.stopPropagation();
+        leaveConfirmModal.classList.add('hidden');
+    });
+}
+if (btnConfirmLeave) {
+    btnConfirmLeave.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.closeArenaToMenu();
+    });
+}
+
+// Botão de Tela Cheia no HUD Superior da Arena
+const btnArenaFs = document.getElementById('btn-arena-fullscreen');
+if (btnArenaFs) {
+    btnArenaFs.addEventListener('click', (e) => {
+        e.stopPropagation();
+        try {
+            const targetWin = (window.parent && window.parent !== window) ? window.parent : window;
+            if (!targetWin.document.fullscreenElement) {
+                requestArenaFullscreen();
+            } else if (targetWin.document.exitFullscreen) {
+                targetWin.document.exitFullscreen().catch(() => {});
+            }
+        } catch (err) {
+            requestArenaFullscreen();
+        }
+    });
+}
+
+// ==========================================
 // TELA DE CARREGAMENTO & CONTAGEM
 // ==========================================
 const LoadingManager = {
     progress: 0,
     interval: null,
+    finished: false,
     bar: document.getElementById('loading-bar-fill'),
     text: document.getElementById('loading-text'),
     screen: document.getElementById('loading-screen'),
@@ -1364,30 +1454,33 @@ const LoadingManager = {
     start() {
         Game.active = false;
 
-        // Ao tocar na tela ou pressionar espaço, pula imediatamente o tutorial
-        const skip = () => {
-            if (this.interval) {
-                clearInterval(this.interval);
-                this.finish();
-            }
+        // Ao tocar na tela de carregamento ou pressionar espaço, ativa modo tela cheia (no mobile) e inicia
+        const skip = (e) => {
+            if (this.finished) return;
+            if (isTouchDevice) requestArenaFullscreen();
+            if (this.interval) clearInterval(this.interval);
+            this.finish();
         };
-        window.addEventListener('click', skip, { once: true });
-        window.addEventListener('touchstart', skip, { once: true });
+
+        if (this.screen) {
+            this.screen.addEventListener('click', skip, { once: true });
+            this.screen.addEventListener('touchstart', skip, { once: true, passive: true });
+        }
         window.addEventListener('keydown', (e) => { if (e.code === 'Space') skip(); }, { once: true });
 
-        // Carregamento suave em ~4 segundos
+        // Carregamento suave em ~3 segundos
         this.interval = setInterval(() => {
-            this.progress += 1.6;
+            this.progress += 2.2;
 
             if (this.progress >= 100) {
                 this.progress = 100;
                 clearInterval(this.interval);
                 this.updateUI();
-                setTimeout(() => this.finish(), 300);
+                setTimeout(() => this.finish(), 250);
             } else {
                 this.updateUI();
             }
-        }, 60);
+        }, 55);
     },
 
     updateUI() {
@@ -1398,14 +1491,16 @@ const LoadingManager = {
     },
 
     finish() {
+        if (this.finished) return;
+        this.finished = true;
         if (this.screen) {
             this.screen.style.opacity = '0';
-            this.screen.style.transition = 'opacity 0.4s ease';
+            this.screen.style.transition = 'opacity 0.35s ease';
 
             setTimeout(() => {
                 this.screen.classList.add('hidden');
                 CountdownManager.start();
-            }, 400);
+            }, 350);
         } else {
             CountdownManager.start();
         }
@@ -1413,7 +1508,7 @@ const LoadingManager = {
 };
 
 const CountdownManager = {
-    counter: 5,
+    counter: 3,
     overlay: document.getElementById('countdown-overlay'),
     numberEl: document.getElementById('countdown-number'),
 
@@ -1430,7 +1525,7 @@ const CountdownManager = {
             this.numberEl.style.animation = 'countdownPulse 1s infinite';
 
             this.counter--;
-            setTimeout(() => this.run(), 1000);
+            setTimeout(() => this.run(), 900);
         } else {
             this.numberEl.innerText = "BATALHA!";
             this.numberEl.classList.add('start-text');
@@ -1438,7 +1533,7 @@ const CountdownManager = {
             setTimeout(() => {
                 this.overlay.classList.add('hidden');
                 Game.init();
-            }, 1000);
+            }, 850);
         }
     }
 };
@@ -1446,25 +1541,13 @@ const CountdownManager = {
 // Inicia carregamento
 window.onload = () => LoadingManager.start();
 
-// ==========================================
-// ORIENTAÇÃO LANDSCAPE OBRIGATÓRIA
-// ==========================================
-function tryLockLandscape() {
-    try {
-        if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(() => {});
-        }
-    } catch (e) {}
-}
-
 const btnRotateFs = document.getElementById('btn-fullscreen-rotate');
 if (btnRotateFs) {
     btnRotateFs.addEventListener('click', () => {
-        const doc = document.documentElement;
-        if (doc.requestFullscreen) doc.requestFullscreen().then(tryLockLandscape).catch(tryLockLandscape);
-        else if (doc.webkitRequestFullscreen) { doc.webkitRequestFullscreen(); tryLockLandscape(); }
-        else tryLockLandscape();
+        requestArenaFullscreen();
     });
 }
 window.addEventListener('load', tryLockLandscape);
-document.addEventListener('touchstart', tryLockLandscape, { once: true });
+document.addEventListener('touchstart', () => {
+    if (isTouchDevice) tryLockLandscape();
+}, { once: true, passive: true });

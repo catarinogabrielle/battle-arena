@@ -777,12 +777,12 @@ loadSocketIO(() => {
                     'SALA PRIVADA CRIADA!',
                     `Código de acesso: #${data.code}\nCompartilhe com seus amigos para entrarem!`,
                     '<i class="fas fa-key" style="color:#00ff88;"></i>',
-                    () => { window.location.href = `arena.html?room=${data.code}`; }
+                    () => { openArenaMatch(`arena.html?room=${data.code}`); }
                 );
                 return;
             }
 
-            window.location.href = `arena.html?room=${data.code}`;
+            openArenaMatch(`arena.html?room=${data.code}`);
         });
 
         socket.on('join_error', (err) => {
@@ -815,7 +815,7 @@ function renderRoomList(rooms) {
     soloLi.innerHTML = `
         <div class="room-info">
             <h4>Batalha Solo (vs IA Inteligente)</h4>
-            <p><i class="fas fa-robot"></i> 5 Bots com Esquiva e Combate Tático</p>
+            <p><i class="fas fa-robot"></i> 5 Bots com Níveis Variados</p>
         </div>
         <div class="room-status">
             <span class="player-count"><i class="fas fa-user-shield"></i> Treino</span>
@@ -863,12 +863,62 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Abre a Arena mantendo o Modo Tela Cheia e Paisagem sem recarregar a página
+const arenaEmbedOverlay = document.getElementById('arena-embed-overlay');
+const arenaEmbedFrame = document.getElementById('arena-embed-frame');
+const isMobileTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
+
+function enterGameModeFullscreen() {
+    try {
+        const doc = document.documentElement;
+        if (!document.fullscreenElement) {
+            if (doc.requestFullscreen) {
+                doc.requestFullscreen().then(tryLockLandscape).catch(tryLockLandscape);
+            } else if (doc.webkitRequestFullscreen) {
+                doc.webkitRequestFullscreen();
+                tryLockLandscape();
+            } else {
+                tryLockLandscape();
+            }
+        } else {
+            tryLockLandscape();
+        }
+    } catch (e) {
+        tryLockLandscape();
+    }
+}
+
+function openArenaMatch(url) {
+    if (roomModal) roomModal.classList.add('hidden');
+    if (isMobileTouch) {
+        enterGameModeFullscreen();
+    }
+    if (arenaEmbedOverlay && arenaEmbedFrame) {
+        arenaEmbedFrame.src = url;
+        arenaEmbedOverlay.classList.remove('hidden');
+        setTimeout(() => {
+            try { arenaEmbedFrame.focus(); } catch (e) {}
+        }, 120);
+    } else {
+        window.location.href = url;
+    }
+}
+
+window.closeArenaEmbed = function () {
+    if (arenaEmbedOverlay && arenaEmbedFrame) {
+        arenaEmbedOverlay.classList.add('hidden');
+        arenaEmbedFrame.src = 'about:blank';
+        RankingSystem.render();
+        RankingSystem.syncWithServer();
+    }
+};
+
 window.iniciarSolo = function () {
     AudioEngine.play('play');
     const playerConfig = getPlayerConfig();
     localStorage.setItem('arenaPlayer', JSON.stringify(playerConfig));
     sessionStorage.setItem('arenaSession', JSON.stringify({ isOnline: false, mode: 'solo' }));
-    window.location.href = 'arena.html?mode=solo';
+    openArenaMatch('arena.html?mode=solo');
 };
 
 window.entrarNaSala = function (code) {
@@ -876,11 +926,13 @@ window.entrarNaSala = function (code) {
     const playerConfig = getPlayerConfig();
     localStorage.setItem('arenaPlayer', JSON.stringify(playerConfig));
 
+    if (isMobileTouch) enterGameModeFullscreen();
+
     if (socket && socket.connected) {
         socket.emit('join_room', { code: code, playerInfo: playerConfig });
     } else {
         sessionStorage.setItem('arenaSession', JSON.stringify({ isOnline: false, roomCode: code }));
-        window.location.href = `arena.html?room=${code}`;
+        openArenaMatch(`arena.html?room=${code}`);
     }
 };
 
@@ -917,6 +969,8 @@ if (btnConfirmCreate) {
         const playerConfig = getPlayerConfig();
         localStorage.setItem('arenaPlayer', JSON.stringify(playerConfig));
 
+        if (isMobileTouch) enterGameModeFullscreen();
+
         if (socket && socket.connected) {
             socket.emit('create_room', {
                 name: name,
@@ -934,7 +988,7 @@ if (btnConfirmCreate) {
                     map: map,
                     maxPlayers: players
                 }));
-                window.location.href = 'arena.html';
+                openArenaMatch('arena.html');
             }, 400);
         }
     });
@@ -954,12 +1008,9 @@ function tryLockLandscape() {
 const btnRotateFs = document.getElementById('btn-fullscreen-rotate');
 if (btnRotateFs) {
     btnRotateFs.addEventListener('click', () => {
-        const doc = document.documentElement;
-        if (doc.requestFullscreen) doc.requestFullscreen().then(tryLockLandscape).catch(tryLockLandscape);
-        else if (doc.webkitRequestFullscreen) { doc.webkitRequestFullscreen(); tryLockLandscape(); }
-        else tryLockLandscape();
+        enterGameModeFullscreen();
     });
 }
 
 window.addEventListener('load', tryLockLandscape);
-document.addEventListener('touchstart', tryLockLandscape, { once: true });
+document.addEventListener('touchstart', tryLockLandscape, { once: true, passive: true });
