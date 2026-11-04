@@ -805,6 +805,26 @@ body {
     }
 }
 
+/* Oculta automaticamente o botão Instalar App quando o PWA já está instalado */
+.action-grid.pwa-installed #btn-install-pwa {
+    display: none !important;
+}
+
+.action-grid.pwa-installed #btn-options {
+    grid-column: 1 / -1;
+    justify-content: center;
+}
+
+@media (display-mode: standalone), (display-mode: window-controls-overlay), (display-mode: minimal-ui) {
+    #btn-install-pwa {
+        display: none !important;
+    }
+    .action-grid #btn-options {
+        grid-column: 1 / -1;
+        justify-content: center;
+    }
+}
+
 /* ======================================================== */
 /* 5. MODAL SYSTEM (MULTIPLAYER, RANKING, GUIA)              */
 /* ======================================================== */

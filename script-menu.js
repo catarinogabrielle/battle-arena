@@ -543,10 +543,63 @@ function renderRoster() {
 renderRoster();
 
 // ==========================================
-// 5. PWA: SERVICE WORKER & INSTALAÇÃO
+// 5. PWA: SERVICE WORKER & INSTALAÇÃO INTELIGENTE
 // ==========================================
 let deferredPWAInstallPrompt = null;
 const btnInstallPwa = document.getElementById('btn-install-pwa');
+const actionGrid = document.querySelector('.action-grid');
+
+function hideInstallPwaButton() {
+    if (btnInstallPwa) {
+        btnInstallPwa.style.display = 'none';
+    }
+    if (actionGrid) {
+        actionGrid.classList.add('pwa-installed');
+    }
+}
+
+function showInstallPwaButton() {
+    if (btnInstallPwa) {
+        btnInstallPwa.style.display = '';
+    }
+    if (actionGrid) {
+        actionGrid.classList.remove('pwa-installed');
+    }
+}
+
+function isRunningAsInstalledPWA() {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+           window.matchMedia('(display-mode: window-controls-overlay)').matches ||
+           window.matchMedia('(display-mode: minimal-ui)').matches ||
+           window.navigator.standalone === true ||
+           document.referrer.includes('android-app://');
+}
+
+// Se já estiver rodando como App instalado ou já tiver sido instalado antes, oculta o botão imediatamente
+if (isRunningAsInstalledPWA() || localStorage.getItem('arena_pwa_installed') === 'true') {
+    localStorage.setItem('arena_pwa_installed', 'true');
+    hideInstallPwaButton();
+}
+
+// Verifica também via API nativa getInstalledRelatedApps (Chrome/Android)
+if ('getInstalledRelatedApps' in navigator) {
+    navigator.getInstalledRelatedApps().then((apps) => {
+        if (Array.isArray(apps) && apps.length > 0) {
+            localStorage.setItem('arena_pwa_installed', 'true');
+            hideInstallPwaButton();
+        }
+    }).catch(() => {});
+}
+
+// Monitora mudanças de display-mode em tempo real
+try {
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+        if (e.matches) {
+            localStorage.setItem('arena_pwa_installed', 'true');
+            hideInstallPwaButton();
+        }
+    });
+} catch (e) {}
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -557,37 +610,42 @@ if ('serviceWorker' in navigator) {
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPWAInstallPrompt = e;
-    if (btnInstallPwa) btnInstallPwa.classList.add('install-ready');
+    // Se o navegador disparou beforeinstallprompt e não está em standalone, o app está disponível para instalar
+    if (!isRunningAsInstalledPWA()) {
+        localStorage.removeItem('arena_pwa_installed');
+        showInstallPwaButton();
+        if (btnInstallPwa) btnInstallPwa.classList.add('install-ready');
+    }
 });
 
 window.addEventListener('appinstalled', () => {
     deferredPWAInstallPrompt = null;
-    if (btnInstallPwa) {
-        btnInstallPwa.innerHTML = '<div class="action-btn-icon"><i class="fas fa-check"></i></div><span>Instalado</span>';
-        setTimeout(() => { btnInstallPwa.style.display = 'none'; }, 3000);
-    }
+    localStorage.setItem('arena_pwa_installed', 'true');
+    hideInstallPwaButton();
 });
 
 if (btnInstallPwa) {
     btnInstallPwa.addEventListener('click', async () => {
         AudioEngine.play('click');
+        if (isRunningAsInstalledPWA()) {
+            localStorage.setItem('arena_pwa_installed', 'true');
+            hideInstallPwaButton();
+            return;
+        }
         if (deferredPWAInstallPrompt) {
             deferredPWAInstallPrompt.prompt();
             const choice = await deferredPWAInstallPrompt.userChoice;
             if (choice && choice.outcome === 'accepted') {
-                btnInstallPwa.style.display = 'none';
+                localStorage.setItem('arena_pwa_installed', 'true');
+                hideInstallPwaButton();
             }
             deferredPWAInstallPrompt = null;
         } else {
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-
-            if (isStandalone) {
-                showArenaPopup('APP INSTALADO', 'Battle Arena já está instalado e rodando como aplicativo!', '<i class="fas fa-check-circle" style="color:#00ff88;"></i>');
-            } else if (isIOS) {
+            if (isIOS) {
                 showArenaPopup('INSTALAR NO IPHONE / IPAD', '1. Toque no ícone de Compartilhar (no Safari)\n2. Selecione "Adicionar à Tela de Início"', '<i class="fab fa-apple"></i>');
             } else {
-                showArenaPopup('INSTALAR APLICATIVO', 'No Chrome ou Edge, clique no ícone de instalar na barra de navegação ou no menu do navegador.', '<i class="fas fa-download"></i>');
+                showArenaPopup('INSTALAR APLICATIVO', 'No Chrome ou Edge, clique no ícone de instalar na barra de endereços ou no menu do navegador.', '<i class="fas fa-download"></i>');
             }
         }
     });
