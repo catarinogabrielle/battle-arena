@@ -43,14 +43,44 @@ const roomParam = urlParams.get('room');
 const sessionData = JSON.parse(sessionStorage.getItem('arenaSession') || 'null');
 const isOnlineRequested = !!roomParam || (sessionData && sessionData.isOnline);
 
-// Resolução lógica padronizada (Garante que a arena no Mobile tenha exatamente a mesma escala e proporção do PC!)
-const LOGICAL_HEIGHT = 960;
+// Resolução lógica padronizada (Garante que 100% do campo de batalha apareça no Mobile e PC sem cortes!)
+const LOGICAL_HEIGHT = 1080;
 function resizeCanvas() {
-    const aspect = Math.max(1.35, Math.min(2.3, window.innerWidth / Math.max(1, window.innerHeight)));
+    const prevW = canvas.width || 1920;
+    const prevH = canvas.height || LOGICAL_HEIGHT;
+    const vw = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1920);
+    const vh = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1080);
+    const aspect = Math.max(1.33, Math.min(2.4, vw / vh));
+
     canvas.height = LOGICAL_HEIGHT;
     canvas.width = Math.round(LOGICAL_HEIGHT * aspect);
+
+    // Se a partida local já estiver rodando e a tela mudar (ex: entrou em Tela Cheia),
+    // mantém o centro da arena e desloca os jogadores proporcionalmente sem cortar nada
+    if (typeof Game !== 'undefined' && Game.zone && Game.zone.radius > 0 && !Game.isOnline) {
+        const dx = (canvas.width / 2) - (prevW / 2);
+        const dy = (canvas.height / 2) - (prevH / 2);
+        if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+            Game.zone.x = canvas.width / 2;
+            Game.zone.y = canvas.height / 2;
+            if (Array.isArray(Game.players)) {
+                Game.players.forEach(p => {
+                    p.x = Math.max(p.radius, Math.min(canvas.width - p.radius, p.x + dx));
+                    p.y = Math.max(p.radius, Math.min(canvas.height - p.radius, p.y + dy));
+                });
+            }
+            if (Array.isArray(Game.projectiles)) {
+                Game.projectiles.forEach(pr => {
+                    pr.x += dx;
+                    pr.y += dy;
+                });
+            }
+        }
+    }
 }
 window.addEventListener('resize', resizeCanvas);
+window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 120));
+document.addEventListener('fullscreenchange', () => setTimeout(resizeCanvas, 80));
 resizeCanvas();
 
 function toCanvasCoords(clientX, clientY) {
@@ -980,11 +1010,12 @@ const Game = {
     localPlayerId: 'P1',
 
     init() {
+        resizeCanvas();
         this.active = true;
         this.zone = {
             x: canvas.width / 2,
             y: canvas.height / 2,
-            radius: Math.max(canvas.width, canvas.height) * 0.45
+            radius: Math.min(canvas.width, canvas.height) * 0.45
         };
 
         if (isOnlineRequested) {
@@ -1050,17 +1081,18 @@ const Game = {
                 });
 
                 this.socket.on('game_snapshot', (snapshot) => {
-                    const scaleX = canvas.width / 1920;
-                    const scaleY = canvas.height / 1080;
+                    const offsetX = (canvas.width / 2) - 960;
+                    const offsetY = (canvas.height / 2) - 540;
+                    const maxAllowedRadius = Math.min(canvas.width, canvas.height) * 0.45;
 
                     this.zone = {
-                        x: snapshot.zone.x * scaleX,
-                        y: snapshot.zone.y * scaleY,
-                        radius: snapshot.zone.radius * Math.min(scaleX, scaleY)
+                        x: snapshot.zone.x + offsetX,
+                        y: snapshot.zone.y + offsetY,
+                        radius: Math.min(snapshot.zone.radius, maxAllowedRadius)
                     };
 
                     this.players = snapshot.players.map(sp => {
-                        const p = new Player(sp.id, sp.name, sp.color, sp.x * scaleX, sp.y * scaleY, sp.isBot, sp.weapon, null, sp.charId);
+                        const p = new Player(sp.id, sp.name, sp.color, sp.x + offsetX, sp.y + offsetY, sp.isBot, sp.weapon, null, sp.charId);
                         p.hp = sp.hp;
                         p.maxHp = sp.maxHp;
                         p.alive = sp.alive;
@@ -1079,9 +1111,9 @@ const Game = {
                     });
 
                     this.projectiles = snapshot.projectiles.map(pr => {
-                        const p = new Projectile(pr.x * scaleX, pr.y * scaleY, 0, pr.color, '', '', pr.charId);
-                        p.vx = pr.vx * scaleX;
-                        p.vy = pr.vy * scaleY;
+                        const p = new Projectile(pr.x + offsetX, pr.y + offsetY, 0, pr.color, '', '', pr.charId);
+                        p.vx = pr.vx;
+                        p.vy = pr.vy;
                         return p;
                     });
 

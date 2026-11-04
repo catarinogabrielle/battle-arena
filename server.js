@@ -142,7 +142,7 @@ function startRoomGameLoop(room) {
     room.zone = {
         x: arenaW / 2,
         y: arenaH / 2,
-        radius: Math.max(arenaW, arenaH) * 0.45,
+        radius: Math.min(arenaW, arenaH) * 0.45,
         minRadius: 110,
         shrinkSpeed: 0.16,
         delayFrames: 1800 // ~60 segundos a 30 FPS
