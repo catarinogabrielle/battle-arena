@@ -43,12 +43,23 @@ const roomParam = urlParams.get('room');
 const sessionData = JSON.parse(sessionStorage.getItem('arenaSession') || 'null');
 const isOnlineRequested = !!roomParam || (sessionData && sessionData.isOnline);
 
+// Resolução lógica padronizada (Garante que a arena no Mobile tenha exatamente a mesma escala e proporção do PC!)
+const LOGICAL_HEIGHT = 960;
 function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const aspect = Math.max(1.35, Math.min(2.3, window.innerWidth / Math.max(1, window.innerHeight)));
+    canvas.height = LOGICAL_HEIGHT;
+    canvas.width = Math.round(LOGICAL_HEIGHT * aspect);
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
+
+function toCanvasCoords(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: (clientX - rect.left) * (canvas.width / Math.max(1, rect.width)),
+        y: (clientY - rect.top) * (canvas.height / Math.max(1, rect.height))
+    };
+}
 
 const CONFIG = {
     speedWalk: 3.4,
@@ -65,15 +76,20 @@ const CONFIG = {
 
 const keys = {};
 const mouse = { x: canvas.width / 2, y: canvas.height / 2, clicked: false, attackTriggered: false };
+const touchJoy = { active: false, vx: 0, vy: 0, angle: 0, manualAim: false };
 
 window.addEventListener('keydown', e => keys[e.code] = true);
 window.addEventListener('keyup', e => keys[e.code] = false);
 window.addEventListener('mousemove', e => {
-    mouse.x = e.clientX;
-    mouse.y = e.clientY;
+    const pos = toCanvasCoords(e.clientX, e.clientY);
+    mouse.x = pos.x;
+    mouse.y = pos.y;
 });
 window.addEventListener('mousedown', e => {
-    if (e.button === 0) {
+    if (e.button === 0 && !isTouchDevice) {
+        const pos = toCanvasCoords(e.clientX, e.clientY);
+        mouse.x = pos.x;
+        mouse.y = pos.y;
         mouse.clicked = true;
         mouse.attackTriggered = true;
     }
@@ -83,7 +99,7 @@ window.addEventListener('mouseup', e => {
 });
 
 // ==========================================
-// CONTROLES MOBILE / TOUCH (JOYSTICK & BOTÕES)
+// CONTROLES MOBILE / TOUCH (JOYSTICK 360° ANALÓGICO & MIRA INTELIGENTE)
 // ==========================================
 const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
 const mobileControlsLayer = document.getElementById('mobile-controls');
@@ -92,9 +108,28 @@ const joystickBase = document.getElementById('joystick-base');
 const joystickStick = document.getElementById('joystick-stick');
 const btnTouchSprint = document.getElementById('btn-touch-sprint');
 const btnTouchAttack = document.getElementById('btn-touch-attack');
+const hudControlsHint = document.getElementById('hud-controls-hint');
+
+// Busca o inimigo vivo mais próximo para Mira Inteligente no Mobile
+function findNearestEnemyForPlayer(p1) {
+    if (!p1 || !Game || !Game.players) return null;
+    let nearest = null;
+    let minDist = Infinity;
+    for (const p of Game.players) {
+        if (p !== p1 && p.alive) {
+            const d = Math.hypot(p.x - p1.x, p.y - p1.y);
+            if (d < minDist) {
+                minDist = d;
+                nearest = p;
+            }
+        }
+    }
+    return nearest ? { target: nearest, dist: minDist } : null;
+}
 
 if (isTouchDevice && mobileControlsLayer) {
     mobileControlsLayer.style.display = 'block';
+    if (hudControlsHint) hudControlsHint.style.display = 'none';
 
     let joystickActive = false;
     let joystickTouchId = null;
@@ -123,6 +158,9 @@ if (isTouchDevice && mobileControlsLayer) {
             if (e.changedTouches[i].identifier === joystickTouchId) {
                 joystickActive = false;
                 joystickTouchId = null;
+                touchJoy.active = false;
+                touchJoy.vx = 0;
+                touchJoy.vy = 0;
                 joystickStick.style.transform = 'translate(0px, 0px)';
                 keys['KeyW'] = false;
                 keys['KeyS'] = false;
@@ -146,27 +184,38 @@ if (isTouchDevice && mobileControlsLayer) {
         const dist = Math.hypot(dx, dy);
         const angle = Math.atan2(dy, dx);
 
-        const maxDist = 42;
+        const maxDist = Math.max(32, rect.width * 0.38);
         const clampedDist = Math.min(dist, maxDist);
         const stickX = Math.cos(angle) * clampedDist;
         const stickY = Math.sin(angle) * clampedDist;
 
         joystickStick.style.transform = `translate(${stickX}px, ${stickY}px)`;
 
-        // Movimentação
-        if (dist > 10) {
-            keys['KeyW'] = dy < -12;
-            keys['KeyS'] = dy > 12;
-            keys['KeyA'] = dx < -12;
-            keys['KeyD'] = dx > 12;
+        // Movimentação analógica 360° fluida
+        if (dist > 6) {
+            const intensity = Math.min(1, (dist - 6) / (maxDist - 6));
+            touchJoy.active = true;
+            touchJoy.vx = Math.cos(angle) * intensity;
+            touchJoy.vy = Math.sin(angle) * intensity;
+            touchJoy.angle = angle;
 
-            // Mira na direção do joystick se não estiver tocando na tela para mirar
-            const p1 = Game.players.find(p => p.id === 'P1' || p.id === Game.localPlayerId);
-            if (p1) {
-                mouse.x = p1.x + Math.cos(angle) * 100;
-                mouse.y = p1.y + Math.sin(angle) * 100;
+            // Compatibilidade com servidor online
+            keys['KeyW'] = touchJoy.vy < -0.25;
+            keys['KeyS'] = touchJoy.vy > 0.25;
+            keys['KeyA'] = touchJoy.vx < -0.25;
+            keys['KeyD'] = touchJoy.vx > 0.25;
+
+            if (!touchJoy.manualAim) {
+                const p1 = Game.players.find(p => p.id === 'P1' || p.id === Game.localPlayerId);
+                if (p1) {
+                    mouse.x = p1.x + Math.cos(angle) * 140;
+                    mouse.y = p1.y + Math.sin(angle) * 140;
+                }
             }
         } else {
+            touchJoy.active = false;
+            touchJoy.vx = 0;
+            touchJoy.vy = 0;
             keys['KeyW'] = false;
             keys['KeyS'] = false;
             keys['KeyA'] = false;
@@ -190,45 +239,64 @@ if (isTouchDevice && mobileControlsLayer) {
         btnTouchSprint.addEventListener('touchcancel', endSprint);
     }
 
-    // Botão de Ataque Touch
+    // Botão de Ataque Touch (com Mira Automática Inteligente + Arraste Opcional)
+    let attackTouchId = null;
     if (btnTouchAttack) {
         btnTouchAttack.addEventListener('touchstart', (e) => {
             e.preventDefault();
+            const touch = e.changedTouches[0];
+            attackTouchId = touch.identifier;
+            btnTouchAttack.classList.add('active');
+
+            // Mira automática no inimigo mais próximo dentro do alcance
+            const p1 = Game.players.find(p => p.id === 'P1' || p.id === Game.localPlayerId);
+            if (p1) {
+                const nearestInfo = findNearestEnemyForPlayer(p1);
+                const autoRange = p1.weapon === 'melee' ? 240 : 620;
+                if (nearestInfo && nearestInfo.dist <= autoRange) {
+                    const t = nearestInfo.target;
+                    mouse.x = t.x + (t.vx || 0) * 6;
+                    mouse.y = t.y + (t.vy || 0) * 6;
+                } else {
+                    mouse.x = p1.x + Math.cos(touchJoy.angle) * 150;
+                    mouse.y = p1.y + Math.sin(touchJoy.angle) * 150;
+                }
+            }
             mouse.clicked = true;
             mouse.attackTriggered = true;
-            btnTouchAttack.classList.add('active');
+        }, { passive: false });
+
+        btnTouchAttack.addEventListener('touchmove', (e) => {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === attackTouchId) {
+                    e.preventDefault();
+                    const t = e.changedTouches[i];
+                    const rect = btnTouchAttack.getBoundingClientRect();
+                    const dx = t.clientX - (rect.left + rect.width / 2);
+                    const dy = t.clientY - (rect.top + rect.height / 2);
+                    if (Math.hypot(dx, dy) > 14) {
+                        touchJoy.manualAim = true;
+                        const aimAng = Math.atan2(dy, dx);
+                        const p1 = Game.players.find(p => p.id === 'P1' || p.id === Game.localPlayerId);
+                        if (p1) {
+                            mouse.x = p1.x + Math.cos(aimAng) * 180;
+                            mouse.y = p1.y + Math.sin(aimAng) * 180;
+                        }
+                    }
+                    break;
+                }
+            }
         }, { passive: false });
 
         const endAttack = () => {
+            attackTouchId = null;
+            touchJoy.manualAim = false;
             mouse.clicked = false;
             btnTouchAttack.classList.remove('active');
         };
         btnTouchAttack.addEventListener('touchend', endAttack);
         btnTouchAttack.addEventListener('touchcancel', endAttack);
     }
-
-    // Toque na tela para mirar e atacar diretamente
-    canvas.addEventListener('touchstart', (e) => {
-        const touch = e.touches[0];
-        if (touch && touch.clientX > window.innerWidth * 0.4) {
-            mouse.x = touch.clientX;
-            mouse.y = touch.clientY;
-            mouse.clicked = true;
-            mouse.attackTriggered = true;
-        }
-    }, { passive: true });
-
-    canvas.addEventListener('touchmove', (e) => {
-        const touch = e.touches[0];
-        if (touch && touch.clientX > window.innerWidth * 0.4) {
-            mouse.x = touch.clientX;
-            mouse.y = touch.clientY;
-        }
-    }, { passive: true });
-
-    canvas.addEventListener('touchend', () => {
-        mouse.clicked = false;
-    }, { passive: true });
 }
 
 // ==========================================
@@ -403,14 +471,31 @@ class Player {
 
         if (!this.isBot) {
             let speed = keys['Space'] ? sRun : sWalk;
-            if (keys[this.controls.up]) moveY -= speed;
-            if (keys[this.controls.down]) moveY += speed;
-            if (keys[this.controls.left]) moveX -= speed;
-            if (keys[this.controls.right]) moveX += speed;
 
-            if (moveX !== 0 && moveY !== 0) {
-                moveX *= 0.7071;
-                moveY *= 0.7071;
+            if (touchJoy.active) {
+                moveX = touchJoy.vx * speed;
+                moveY = touchJoy.vy * speed;
+            } else {
+                if (keys[this.controls.up]) moveY -= speed;
+                if (keys[this.controls.down]) moveY += speed;
+                if (keys[this.controls.left]) moveX -= speed;
+                if (keys[this.controls.right]) moveX += speed;
+
+                if (moveX !== 0 && moveY !== 0) {
+                    moveX *= 0.7071;
+                    moveY *= 0.7071;
+                }
+            }
+
+            // No mobile, se estiver atacando sem mira manual, foca no inimigo mais próximo no alcance
+            if (isTouchDevice && mouse.clicked && !touchJoy.manualAim) {
+                const nearestInfo = findNearestEnemyForPlayer(this);
+                const autoRange = this.weapon === 'melee' ? 240 : 620;
+                if (nearestInfo && nearestInfo.dist <= autoRange) {
+                    const t = nearestInfo.target;
+                    mouse.x = t.x + (t.vx || 0) * 6;
+                    mouse.y = t.y + (t.vy || 0) * 6;
+                }
             }
 
             this.angle = Math.atan2(mouse.y - this.y, mouse.x - this.x);
@@ -423,7 +508,7 @@ class Player {
             else elements.damageOverlay.classList.remove('pulse-red');
         } else {
             // ==========================================
-            // IA AVANÇADA (ESQUIVA + KITING + PREDIÇÃO)
+            // IA AVANÇADA (ESQUIVA + KITING + PREDIÇÃO + SPRINT TÁTICO)
             // ==========================================
             let speed = sWalk * 0.96;
             let distToZone = Math.hypot(this.x - Game.zone.x, this.y - Game.zone.y);
@@ -431,8 +516,8 @@ class Player {
             // 1. ZONA SEGURA (PRIORIDADE ABSOLUTA)
             if (distToZone > Game.zone.radius - 75) {
                 this.angle = Math.atan2(Game.zone.y - this.y, Game.zone.x - this.x);
-                moveX = Math.cos(this.angle) * sRun * 1.1;
-                moveY = Math.sin(this.angle) * sRun * 1.1;
+                moveX = Math.cos(this.angle) * sRun * 1.05;
+                moveY = Math.sin(this.angle) * sRun * 1.05;
                 this.botState = 'ZONE_FLEE';
             } else {
                 // 2. ESQUIVA INTELIGENTE DE PROJÉTEIS (DODGE 90°)
@@ -440,11 +525,11 @@ class Player {
                 for (let pr of Game.projectiles) {
                     if (pr.ownerId !== this.id) {
                         let d = Math.hypot(pr.x - this.x, pr.y - this.y);
-                        if (d < 200) {
+                        if (d < 220) {
                             let prAngle = Math.atan2(pr.vy, pr.vx);
                             let toBotAngle = Math.atan2(this.y - pr.y, this.x - pr.x);
                             let diffAngle = Math.abs(prAngle - toBotAngle);
-                            if (diffAngle < 0.45 || diffAngle > Math.PI * 2 - 0.45) {
+                            if (diffAngle < 0.48 || diffAngle > Math.PI * 2 - 0.48) {
                                 incomingProj = pr;
                                 break;
                             }
@@ -454,7 +539,7 @@ class Player {
 
                 if (incomingProj) {
                     const prAngle = Math.atan2(incomingProj.vy, incomingProj.vx);
-                    const dodgeAngle = prAngle + (Math.PI / 2) * (Math.random() > 0.5 ? 1 : -1);
+                    const dodgeAngle = prAngle + (Math.PI / 2) * this.strafeDir;
                     moveX = Math.cos(dodgeAngle) * sRun;
                     moveY = Math.sin(dodgeAngle) * sRun;
                     this.botState = 'DODGING';
@@ -469,67 +554,71 @@ class Player {
                         if (p !== this && p.alive) {
                             let d = Math.hypot(p.x - this.x, p.y - this.y);
                             if (d < minDist) { minDist = d; newClosest = p; }
-                            if (p.hp < lowestHp) { lowestHp = p.hp; lowestTarget = p; }
+                            if (p.hp < lowestHp) { lowestHp = p.hp; lowestHpTarget = p; }
                         }
                     });
 
-                    let target = (lowestHpTarget && minDist < 450 && lowestHpTarget.hp < 150) ? lowestHpTarget : newClosest;
+                    let target = (lowestHpTarget && minDist < 450 && lowestHpTarget.hp < 160) ? lowestHpTarget : newClosest;
                     this.currentTarget = target;
                     let closest = this.currentTarget;
 
                     // 4. KITING DURANTE RECARGA
-                    if (this.reloadTimer > 0 && closest && minDist < 350) {
+                    if (this.reloadTimer > 0 && closest && minDist < 360) {
                         this.botState = 'KITING';
                         this.angle = Math.atan2(this.y - closest.y, this.x - closest.x);
-                        moveX = Math.cos(this.angle) * sRun * 0.9;
-                        moveY = Math.sin(this.angle) * sRun * 0.9;
+                        moveX = Math.cos(this.angle + (this.strafeDir * 0.4)) * sRun * 0.88;
+                        moveY = Math.sin(this.angle + (this.strafeDir * 0.4)) * sRun * 0.88;
                     } else if (this.hp < this.maxHp * 0.25 && closest && minDist < 500 && this.lastDamageTimer < 150) {
                         this.botState = 'FLEE';
                         this.angle = Math.atan2(this.y - closest.y, this.x - closest.x);
-                        moveX = Math.cos(this.angle) * sRun * 0.85;
-                        moveY = Math.sin(this.angle) * sRun * 0.85;
-                    } else if (closest && minDist < 750) {
+                        moveX = Math.cos(this.angle) * sRun * 0.88;
+                        moveY = Math.sin(this.angle) * sRun * 0.88;
+                    } else if (closest && minDist < 850) {
                         this.botState = 'ATTACK';
                         this.strafeTimer--;
                         if (this.strafeTimer <= 0) {
                             this.strafeDir *= -1;
-                            this.strafeTimer = 40 + Math.random() * 60;
+                            this.strafeTimer = 35 + Math.random() * 55;
                         }
 
-                        // MIRA PREDITIVA
-                        let aimX = closest.x + (closest.vx || 0) * 10;
-                        let aimY = closest.y + (closest.vy || 0) * 10;
+                        // MIRA PREDITIVA PROPORCIONAL À DISTÂNCIA
+                        const leadFactor = Math.min(16, minDist / 18);
+                        let aimX = closest.x + (closest.vx || 0) * leadFactor;
+                        let aimY = closest.y + (closest.vy || 0) * leadFactor;
                         this.angle = Math.atan2(aimY - this.y, aimX - this.x);
 
                         if (this.weapon === 'melee') {
                             if (minDist > 85) {
-                                moveX = Math.cos(this.angle) * speed * 1.1;
-                                moveY = Math.sin(this.angle) * speed * 1.1;
-                            } else if (minDist < 50) {
+                                // Usa sprint tático e zigue-zague para encostar no alvo
+                                const approachSpeed = (minDist > 130 && minDist < 320) ? sRun * 0.92 : speed * 1.12;
+                                const weave = Math.sin((Game.frameCount + this.id.charCodeAt(1) * 20) * 0.08) * 0.35;
+                                moveX = Math.cos(this.angle + weave) * approachSpeed;
+                                moveY = Math.sin(this.angle + weave) * approachSpeed;
+                            } else if (minDist < 48) {
                                 moveX = -Math.cos(this.angle) * speed * 0.5;
                                 moveY = -Math.sin(this.angle) * speed * 0.5;
                             } else {
-                                moveX = Math.cos(this.angle + (Math.PI / 2 * this.strafeDir)) * speed * 0.8;
-                                moveY = Math.sin(this.angle + (Math.PI / 2 * this.strafeDir)) * speed * 0.8;
+                                moveX = Math.cos(this.angle + (Math.PI / 2 * this.strafeDir)) * speed * 0.85;
+                                moveY = Math.sin(this.angle + (Math.PI / 2 * this.strafeDir)) * speed * 0.85;
                             }
 
                             if (minDist < 95 && this.cooldown <= 0 && this.currentAmmo > 0 && this.reloadTimer <= 0) {
                                 this.attack();
                             }
                         } else {
-                            if (minDist < 200) {
-                                moveX = -Math.cos(this.angle) * speed * 1.0;
-                                moveY = -Math.sin(this.angle) * speed * 1.0;
-                            } else if (minDist > 360) {
+                            if (minDist < 210) {
+                                moveX = -Math.cos(this.angle) * speed * 1.05;
+                                moveY = -Math.sin(this.angle) * speed * 1.05;
+                            } else if (minDist > 370) {
                                 moveX = Math.cos(this.angle) * speed * 1.0;
                                 moveY = Math.sin(this.angle) * speed * 1.0;
                             } else {
-                                moveX = Math.cos(this.angle + (Math.PI / 2 * this.strafeDir)) * speed * 0.85;
-                                moveY = Math.sin(this.angle + (Math.PI / 2 * this.strafeDir)) * speed * 0.85;
+                                moveX = Math.cos(this.angle + (Math.PI / 2 * this.strafeDir)) * speed * 0.88;
+                                moveY = Math.sin(this.angle + (Math.PI / 2 * this.strafeDir)) * speed * 0.88;
                             }
 
-                            if (this.cooldown <= 0 && this.currentAmmo > 0 && this.reloadTimer <= 0) {
-                                let error = (minDist > 300) ? (Math.random() - 0.5) * 0.12 : 0;
+                            if (minDist < 580 && this.cooldown <= 0 && this.currentAmmo > 0 && this.reloadTimer <= 0) {
+                                let error = (minDist > 300) ? (Math.random() - 0.5) * 0.1 : 0;
                                 this.angle += error;
                                 this.attack();
                             }
@@ -537,7 +626,7 @@ class Player {
                     } else {
                         // WANDER
                         this.botState = 'WANDER';
-                        if (!this.wanderTarget || Math.hypot(this.wanderTarget.x - this.x, this.wanderTarget.y - this.y) < 30) {
+                        if (!this.wanderTarget || Math.hypot(this.wanderTarget.x - this.x, this.wanderTarget.y - this.y) < 35) {
                             let r = Game.zone.radius * Math.random() * 0.6;
                             let theta = Math.random() * Math.PI * 2;
                             this.wanderTarget = {
@@ -546,8 +635,8 @@ class Player {
                             };
                         }
                         this.angle = Math.atan2(this.wanderTarget.y - this.y, this.wanderTarget.x - this.x);
-                        moveX = Math.cos(this.angle) * speed * 0.6;
-                        moveY = Math.sin(this.angle) * speed * 0.6;
+                        moveX = Math.cos(this.angle) * speed * 0.65;
+                        moveY = Math.sin(this.angle) * speed * 0.65;
                     }
                 }
             }
@@ -650,6 +739,18 @@ class Player {
 
     draw() {
         if (!this.alive) return;
+
+        // Halo indicador sob o jogador principal para fácil visualização no Mobile e PC
+        if (!this.isBot && (this.id === 'P1' || this.id === Game.localPlayerId)) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius + 9, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(0, 255, 136, 0.55)";
+            ctx.lineWidth = 2.5;
+            ctx.setLineDash([6, 4]);
+            ctx.stroke();
+            ctx.restore();
+        }
 
         if (this.healAura > 0) {
             ctx.beginPath();
@@ -770,17 +871,15 @@ class Player {
         ctx.restore();
 
         ctx.fillStyle = "white";
-        ctx.font = "bold 12px Arial";
+        ctx.font = "bold 12px Rajdhani, Arial";
         ctx.textAlign = "center";
         ctx.fillText(this.name, this.x, this.y - 35);
 
-        if (this.id !== 'P1' || Game.isSpectating) {
-            let barW = 40;
-            ctx.fillStyle = "rgba(0,0,0,0.7)";
-            ctx.fillRect(this.x - 20, this.y - 30, barW, 4);
-            ctx.fillStyle = (this.hp < 150) ? "#ff3d68" : this.color;
-            ctx.fillRect(this.x - 20, this.y - 30, (Math.max(0, this.hp) / this.maxHp) * barW, 4);
-        }
+        let barW = 42;
+        ctx.fillStyle = "rgba(0,0,0,0.75)";
+        ctx.fillRect(this.x - barW / 2, this.y - 30, barW, 5);
+        ctx.fillStyle = (this.hp < 150) ? "#ff3d68" : (this.id === 'P1' ? "#00ff88" : this.color);
+        ctx.fillRect(this.x - barW / 2, this.y - 30, (Math.max(0, this.hp) / this.maxHp) * barW, 5);
     }
 }
 
@@ -822,16 +921,25 @@ const Game = {
         this.isOnline = false;
         const cX = canvas.width / 2;
         const cY = canvas.height / 2;
-        const offset = Math.min(canvas.width, canvas.height) * 0.25;
+        const spawnR = Math.min(canvas.width, canvas.height) * 0.34;
+
+        const botConfigs = [
+            { id: 'B1', name: 'MALACOR [IA]', color: '#B19CD9', weapon: 'ranged', charId: 'malacor', angle: 0 },
+            { id: 'B2', name: 'KAELEN [IA]', color: '#00d2ff', weapon: 'melee', charId: 'kaelen', angle: (Math.PI * 2) / 5 },
+            { id: 'B3', name: 'ELARA [IA]', color: '#A7FF83', weapon: 'ranged', charId: 'elara', angle: (Math.PI * 4) / 5 },
+            { id: 'B4', name: 'SILAS [IA]', color: '#ffffff', weapon: 'melee', charId: 'silas', angle: (Math.PI * 6) / 5 },
+            { id: 'B5', name: 'MORWEN [IA]', color: '#ff3d68', weapon: 'ranged', charId: 'morwen', angle: (Math.PI * 8) / 5 }
+        ];
 
         this.players = [
             new Player('P1', savedData.nickname, savedData.color, cX, cY, false, savedData.weapon,
                 { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD' }, savedData.charId),
-            new Player('B1', 'Malacor_Bot', '#B19CD9', cX - offset, cY - offset, true, 'ranged', null, 'malacor'),
-            new Player('B2', 'Kaelen_Bot', '#00d2ff', cX + offset, cY - offset, true, 'melee', null, 'kaelen'),
-            new Player('B3', 'Elara_Bot', '#A7FF83', cX - offset, cY + offset, true, 'ranged', null, 'elara'),
-            new Player('B4', 'Silas_Bot', '#ffffff', cX + offset, cY + offset, true, 'melee', null, 'silas'),
-            new Player('B5', 'Morwen_Bot', '#ff3d68', cX + (offset * 1.2), cY, true, 'ranged', null, 'morwen')
+            ...botConfigs.map(b => new Player(
+                b.id, b.name, b.color,
+                cX + Math.cos(b.angle) * spawnR,
+                cY + Math.sin(b.angle) * spawnR,
+                true, b.weapon, null, b.charId
+            ))
         ];
 
         this.resetPlayerPips(this.players[0].maxAmmo);

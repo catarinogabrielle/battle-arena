@@ -11,9 +11,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="icon" type="image/png" sizes="192x192" href="assets/logo-los.png">
-    <link rel="shortcut icon" type="image/png" href="assets/logo-los.png">
-    <link rel="apple-touch-icon" href="assets/logo-los.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/pwa-icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/pwa-icon-512.png">
+    <link rel="shortcut icon" type="image/png" href="assets/pwa-icon-192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="assets/pwa-icon-192.png">
 
     <!-- FONTES GAMER MODERNAS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,11 +28,11 @@
 <body>
     <div id="loading-screen" class="overlay-screen">
         <div class="tutorial-wrapper">
-            <h1 class="tutorial-title">GUIA DE CONTROLES</h1>
+            <h1 class="tutorial-title">COMO JOGAR NA ARENA</h1>
 
             <div class="tutorial-panels">
-                <div class="tutorial-box">
-                    <div class="box-header">TECLADO</div>
+                <div class="tutorial-box" id="tutorial-pc-box">
+                    <div class="box-header"><i class="fas fa-desktop"></i> COMPUTADOR (PC)</div>
                     <div class="keyboard-layout">
                         <div class="key-group">
                             <div class="key-row">
@@ -45,29 +46,30 @@
                                 <div class="key active-key">D</div>
                             </div>
                         </div>
-                        <div class="key-desc">MOVER O PERSONAGEM</div>
+                        <div class="key-desc">MOVER EM 360°</div>
 
                         <div class="key spacebar active-key">ESPAÇO</div>
-                        <div class="key-desc">CORRER (SPRINT)</div>
+                        <div class="key-desc">CORRER (SPRINT) &bull; CLIQUE: ATACAR</div>
                     </div>
                 </div>
 
-                <div class="tutorial-box">
-                    <div class="box-header">MOUSE / TOQUE</div>
+                <div class="tutorial-box" id="tutorial-mobile-box">
+                    <div class="box-header"><i class="fas fa-mobile-alt"></i> CELULAR (TOUCH)</div>
                     <div class="mouse-layout">
-                        <div class="css-mouse">
-                            <div class="mouse-left-click active-click"></div>
-                            <div class="mouse-right-click"></div>
-                            <div class="mouse-scroll"></div>
-                        </div>
-                        <div class="mouse-desc">
-                            <div class="desc-item">
-                                <span class="highlight-text">MOVER O MOUSE</span>
-                                <span class="sub-text">Mirar e Direcionar</span>
+                        <div class="mobile-guide-icons">
+                            <div class="mobile-guide-item">
+                                <span class="mg-circle mg-joy"><i class="fas fa-arrows-alt"></i></span>
+                                <div class="desc-item">
+                                    <span class="highlight-text">JOYSTICK ESQUERDO</span>
+                                    <span class="sub-text">Arraste em 360° para Mover</span>
+                                </div>
                             </div>
-                            <div class="desc-item">
-                                <span class="highlight-text">CLIQUE / TOQUE</span>
-                                <span class="sub-text">Atacar (Ataque Básico)</span>
+                            <div class="mobile-guide-item">
+                                <span class="mg-circle mg-atk"><i class="fas fa-crosshairs"></i></span>
+                                <div class="desc-item">
+                                    <span class="highlight-text">BOTÕES À DIREITA</span>
+                                    <span class="sub-text">Vermelho: Atacar (Mira Auto) &bull; Azul: Correr</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -92,7 +94,7 @@
     <div id="spell-warning" class="hidden">⚠️ AVISO!</div>
 
     <header class="hud-top">
-        <button class="btn-leave" onclick="window.location.href='menu.html'">
+        <button class="btn-leave" onclick="window.location.href='index.html'">
             <i class="fas fa-sign-out-alt"></i> SAIR
         </button>
         <div class="hud-zone">
@@ -110,8 +112,8 @@
     <footer class="hud-bottom" id="player-hud">
         <div class="player-panel">
             <div class="panel-header">
-                <span id="player-name-hud">KAELEN_BR</span>
-                <span id="hud-weapon-name">ESPADA LENDÁRIA</span>
+                <span id="player-name-hud">GUERREIRO</span>
+                <span id="hud-weapon-name">ESPADA</span>
             </div>
 
             <div class="hp-bar-bg">
@@ -127,8 +129,8 @@
             </div>
         </div>
 
-        <div class="controls-hint">
-            W,A,S,D: Mover | ESPAÇO: Correr | MOUSE / TOQUE: Atacar
+        <div class="controls-hint" id="hud-controls-hint">
+            W,A,S,D: Mover &bull; ESPAÇO: Correr &bull; CLIQUE: Atacar
         </div>
     </footer>
 
@@ -142,9 +144,11 @@
         <div class="touch-actions-zone">
             <button id="btn-touch-sprint" class="touch-action-btn btn-sprint" aria-label="Correr">
                 <i class="fas fa-running"></i>
+                <span class="touch-btn-label">CORRER</span>
             </button>
             <button id="btn-touch-attack" class="touch-action-btn btn-attack" aria-label="Atacar">
                 <i class="fas fa-crosshairs"></i>
+                <span class="touch-btn-label">ATACAR</span>
             </button>
         </div>
     </div>
@@ -161,7 +165,7 @@
         <div class="end-actions">
             <button class="btn-play-again" onclick="window.location.reload()"><i class="fas fa-redo"></i> JOGAR
                 NOVAMENTE</button>
-            <button class="btn-menu" onclick="window.location.href='menu.html'">MENU</button>
+            <button class="btn-menu" onclick="window.location.href='index.html'">MENU</button>
         </div>
     </div>
 

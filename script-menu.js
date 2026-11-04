@@ -63,7 +63,7 @@ let selectedCharIndex = 0;
 const rosterContainer = document.getElementById('roster-container');
 const mainImg = document.getElementById('main-hero-img');
 const hudAvatarImg = document.getElementById('hud-avatar-img');
-const nickElement = document.getElementById('player-nickname');
+const nickInput = document.getElementById('player-nickname-input');
 const rankUserName = document.getElementById('rank-user-name');
 const rankTop1Name = document.getElementById('rank-top1-name');
 
@@ -191,13 +191,13 @@ if (btnFullscreen) {
 }
 
 // ==========================================
-// 3. CARREGAMENTO DE DADOS DO JOGADOR
+// 3. CARREGAMENTO DE DADOS DO JOGADOR (NICKNAME DIRETO)
 // ==========================================
 const savedPlayer = JSON.parse(localStorage.getItem('arenaPlayer') || '{}');
 const playerInfo = JSON.parse(localStorage.getItem('arenaPlayerInfo') || '{}');
-const activeNickname = savedPlayer.nickname || playerInfo.username || 'CATARINO';
+const activeNickname = (savedPlayer.nickname || playerInfo.username || 'GUERREIRO').slice(0, 16);
 
-if (nickElement) nickElement.innerText = activeNickname;
+if (nickInput) nickInput.value = activeNickname;
 if (rankUserName) rankUserName.innerText = `${activeNickname} (VOCÊ)`;
 if (rankTop1Name) rankTop1Name.innerText = activeNickname;
 
@@ -206,26 +206,26 @@ if (savedPlayer.charId) {
     if (idx !== -1) selectedCharIndex = idx;
 }
 
-// Edição de Nickname
+// Edição de Nickname direta no Input
 const btnEditNick = document.getElementById('btn-edit-nick');
-if (btnEditNick && nickElement) {
+if (btnEditNick && nickInput) {
     btnEditNick.addEventListener('click', () => {
         AudioEngine.play('click');
-        nickElement.focus();
-        const range = document.createRange();
-        range.selectNodeContents(nickElement);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
+        nickInput.focus();
+        nickInput.select();
     });
 }
 
-if (nickElement) {
-    nickElement.addEventListener('blur', () => savePlayerData());
-    nickElement.addEventListener('keydown', (e) => {
+if (nickInput) {
+    nickInput.addEventListener('input', () => savePlayerData());
+    nickInput.addEventListener('blur', () => {
+        if (!nickInput.value.trim()) nickInput.value = 'GUERREIRO';
+        savePlayerData();
+    });
+    nickInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            nickElement.blur();
+            nickInput.blur();
         }
     });
 }
@@ -239,8 +239,9 @@ function savePlayerData() {
 
 function getPlayerConfig() {
     const char = characters[selectedCharIndex] || characters[0];
+    const rawNick = nickInput ? nickInput.value.trim().toUpperCase() : 'GUERREIRO';
     return {
-        nickname: nickElement ? nickElement.innerText.trim() : 'CATARINO',
+        nickname: (rawNick || 'GUERREIRO').slice(0, 16),
         color: char.color,
         weapon: char.weapon,
         charId: char.id
@@ -350,13 +351,22 @@ if (btnInstallPwa) {
 }
 
 // ==========================================
-// 6. MODAIS (MULTIPLAYER, RANKING, GUIA)
+// 6. MODAIS & BOTÕES DE AÇÃO (TREINO IA, MULTIPLAYER, RANKING, GUIA)
 // ==========================================
 const roomModal = document.getElementById('room-modal');
 const rankingModal = document.getElementById('ranking-modal');
 const guideModal = document.getElementById('guide-modal');
 
-// Botão de Play Massivo
+// Botão Direto: Modo Treino (vs IA)
+const btnPlaySolo = document.getElementById('btn-play-solo');
+if (btnPlaySolo) {
+    btnPlaySolo.addEventListener('mouseenter', () => AudioEngine.play('hover'));
+    btnPlaySolo.addEventListener('click', () => {
+        window.iniciarSolo();
+    });
+}
+
+// Botão de Salas Multiplayer Online
 const btnPlay = document.getElementById('btn-play');
 if (btnPlay) {
     btnPlay.addEventListener('mouseenter', () => AudioEngine.play('hover'));
@@ -402,16 +412,17 @@ if (closeGuideBtn && guideModal) {
     });
 }
 
-// Botão de Opções / Sair
+// Botão Meu Nick (Edição rápida de Nickname)
 const btnOptions = document.getElementById('btn-options');
 if (btnOptions) {
     btnOptions.addEventListener('click', () => {
         AudioEngine.play('click');
-        const currentUser = nickElement ? nickElement.innerText.trim() : 'Jogador';
-        const action = confirm(`⚙️ CONFIGURAÇÕES DE CONTA\n\nJogador atual: ${currentUser}\n\nDeseja deslogar e voltar à Tela de Login?`);
-        if (action) {
-            localStorage.removeItem('ygaming_token');
-            window.location.href = 'login.html';
+        const currentUser = nickInput ? nickInput.value.trim() : 'GUERREIRO';
+        const newNick = prompt('✏️ DIGITE SEU NICKNAME PARA JOGAR:', currentUser);
+        if (newNick && newNick.trim()) {
+            const clean = newNick.trim().toUpperCase().slice(0, 16);
+            if (nickInput) nickInput.value = clean;
+            savePlayerData();
         }
     });
 }

@@ -4,16 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Battle Arena - Login</title>
+    <title>Battle Arena - Last One Standing</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00d2ff">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="icon" type="image/png" sizes="192x192" href="assets/logo-los.png">
-    <link rel="shortcut icon" type="image/png" href="assets/logo-los.png">
-    <link rel="apple-touch-icon" href="assets/logo-los.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/pwa-icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/pwa-icon-512.png">
+    <link rel="shortcut icon" type="image/png" href="assets/pwa-icon-192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="assets/pwa-icon-192.png">
 
     <!-- FONTES GAMER MODERNAS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,140 +22,353 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Rajdhani:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style-login.css">
+    <link rel="stylesheet" href="style-menu.css">
 </head>
 
 <body>
-    <div class="login-container">
-        <!-- LOGO OFICIAL -->
-        <div class="game-logo">
-            <img src="assets/logo-los.png" alt="Last One Standing Logo">
+    <!-- LUZ AMBIENTE DINÂMICA DO HERÓI -->
+    <div class="ambient-glow" id="ambient-glow"></div>
+
+    <!-- HUD SUPERIOR LIMPO E COMPACTO (SEM LOGIN E SEM MOEDAS) -->
+    <header class="player-hud">
+        <div class="player-profile-card">
+            <div class="profile-avatar-frame">
+                <img src="assets/kaelen.png" alt="Avatar" id="hud-avatar-img" class="profile-avatar">
+                <div class="online-dot" title="Pronto para Jogar"></div>
+            </div>
+            <div class="player-identity">
+                <label for="player-nickname-input" class="nick-field-label">
+                    <i class="fas fa-user-tag"></i> SEU NICKNAME
+                </label>
+                <div class="nickname-row">
+                    <input type="text" id="player-nickname-input" class="nickname-input" value="GUERREIRO" maxlength="16" placeholder="Digite seu Nick..." spellcheck="false" autocomplete="off">
+                    <button class="btn-edit-nick" id="btn-edit-nick" title="Editar seu Nickname"><i class="fas fa-pen"></i></button>
+                </div>
+            </div>
         </div>
 
-        <div class="login-panel" id="main-panel">
-            <!-- CASO 1: SESSÃO EXISTENTE (EXIBE CARD LIMPO DE RETORNO) -->
-            <div id="quick-continue-box" class="quick-continue-box" style="display: none;">
-                <div class="welcome-header">
-                    <span class="welcome-tag">SESSÃO ATIVA</span>
-                    <h2 class="welcome-name" id="saved-player-name">CATARINOGABRIELLE</h2>
-                    <p class="welcome-desc">Pronto para retornar à arena de combate?</p>
-                </div>
-
-                <a href="menu.html" class="login-button btn-quick-play" id="btn-quick-play">
-                    <span>JOGAR AGORA</span> <i class="fas fa-play button-arrow"></i>
-                </a>
-
-                <button type="button" class="btn-switch-account" id="btn-show-form">
-                    <i class="fas fa-user-edit"></i> Entrar com outra conta
+        <div class="player-economy-controls">
+            <div class="quick-toggles">
+                <button class="icon-toggle-btn" id="btn-toggle-sound" title="Alternar Som">
+                    <i class="fas fa-volume-up" id="sound-icon"></i>
+                </button>
+                <button class="icon-toggle-btn" id="btn-toggle-fullscreen" title="Tela Cheia">
+                    <i class="fas fa-expand"></i>
                 </button>
             </div>
+        </div>
+    </header>
 
-            <!-- CASO 2: FORMULÁRIO DE LOGIN (EMAIL E SENHA) -->
-            <div id="form-wrapper">
-                <div class="panel-header">
-                    <h2>ACESSO À ARENA</h2>
-                    <p>Identifique seu combatente para conectar</p>
+    <!-- ÁREA PRINCIPAL DO JOGO -->
+    <main class="cosmos-container">
+
+        <!-- LADO ESQUERDO: CARTÃO DO CAMPEÃO & SELETOR DE HERÓIS -->
+        <section class="champion-stage">
+            <!-- CARTÃO OFICIAL EM DESTAQUE (SEM NENHUMA CAIXA PRETA COBRINDO A ILUSTRAÇÃO) -->
+            <div class="champion-card-frame">
+                <img src="assets/kaelen.png" alt="Card do Campeão" id="main-hero-img" class="champion-card-img">
+            </div>
+
+            <!-- SELETOR DE HERÓIS EM MINIATURA (PROPORÇÃO 16:9 PERFEITA) -->
+            <div class="roster-bar">
+                <span class="roster-label">SELECIONE O HERÓI</span>
+                <div class="character-roster" id="roster-container">
+                    <!-- Gerado dinamicamente via script-menu.js -->
+                </div>
+            </div>
+        </section>
+
+        <!-- LADO DIREITO: AÇÕES, MODO E ENTRADA NA ARENA -->
+        <section class="action-nexus">
+            <!-- CARD DE MODO DE JOGO & DIFICULDADE DA IA -->
+            <div class="game-mode-card">
+                <div class="mode-header">
+                    <span class="mode-live-dot"></span>
+                    <span class="mode-tag">ARENA DE SOBREVIVÊNCIA &bull; 6 COMBATENTES</span>
+                </div>
+                <div class="mode-body">
+                    <div class="mode-icon"><i class="fas fa-meteor"></i></div>
+                    <div class="mode-text">
+                        <h3 class="mode-title">HEXÁGONO CÓSMICO</h3>
+                        <p class="mode-desc">Tempestade progressiva &bull; IA Tática</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTÃO DIRETO: JOGAR TREINO CONTRA IA -->
+            <button class="btn-massive-play btn-solo-ai" id="btn-play-solo">
+                <div class="btn-play-sheen"></div>
+                <div class="play-content">
+                    <span class="play-title">MODO TREINO (VS IA)</span>
+                    <span class="play-subtitle">JOGAR AGORA CONTRA 5 BOTS INTELIGENTES</span>
+                </div>
+                <div class="play-icon-box">
+                    <i class="fas fa-robot play-icon"></i>
+                </div>
+            </button>
+
+            <!-- BOTÃO SECUNDÁRIO: SALAS MULTIPLAYER ONLINE -->
+            <button class="btn-multiplayer-rooms" id="btn-play">
+                <div class="multi-btn-left">
+                    <i class="fas fa-globe"></i>
+                    <div class="multi-btn-text">
+                        <span class="multi-title">SALAS MULTIPLAYER</span>
+                        <span class="multi-sub">Criar Sala ou Entrar com Código</span>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-right multi-arrow"></i>
+            </button>
+
+            <!-- DOCK DE AÇÕES EM GRID -->
+            <div class="action-grid">
+                <button class="action-card-btn" id="btn-install-pwa" title="Instalar aplicativo PWA">
+                    <div class="action-btn-icon icon-pwa-white"><i class="fas fa-download"></i></div>
+                    <span>Instalar App</span>
+                </button>
+
+                <button class="action-card-btn" id="btn-ranking" title="Ver Ranking Global">
+                    <div class="action-btn-icon"><i class="fas fa-trophy"></i></div>
+                    <span>Ranking</span>
+                </button>
+
+                <button class="action-card-btn" id="btn-guide" title="Guia de Combate e Controles">
+                    <div class="action-btn-icon"><i class="fas fa-gamepad"></i></div>
+                    <span>Controles</span>
+                </button>
+
+                <button class="action-card-btn" id="btn-options" title="Alterar Nickname">
+                    <div class="action-btn-icon"><i class="fas fa-user-edit"></i></div>
+                    <span>Meu Nick</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL DE MULTIPLAYER & SALAS -->
+    <div id="room-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="close-btn" id="close-modal-btn" aria-label="Fechar"><i class="fas fa-times"></i></button>
+
+            <div class="modal-header-tabs">
+                <button class="modal-tab active" id="tab-rooms"><i class="fas fa-globe"></i> SALAS ABERTAS</button>
+                <button class="modal-tab" id="tab-create"><i class="fas fa-plus-circle"></i> CRIAR SALA</button>
+            </div>
+
+            <!-- VIEW: LISTA DE SALAS -->
+            <div id="view-room-list" class="modal-view">
+                <div class="modal-actions-bar">
+                    <div class="join-code-box">
+                        <i class="fas fa-key code-icon"></i>
+                        <input type="text" placeholder="Código (Ex: LOS01)..." maxlength="6" id="input-room-code">
+                        <button class="btn-join-code" id="btn-join-code" title="Entrar com código">
+                            <span>ENTRAR</span> <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <button class="btn-open-create" id="btn-show-create">
+                        <i class="fas fa-plus"></i> NOVA SALA
+                    </button>
                 </div>
 
-                <form id="login-form">
-                    <div class="input-group">
-                        <i class="fas fa-envelope input-icon"></i>
-                        <input type="email" id="email" placeholder="combatente@los.arena" required autocomplete="email">
+                <div class="public-rooms-section">
+                    <div class="section-title-row">
+                        <h3>SALAS PÚBLICAS DISPONÍVEIS</h3>
+                        <span class="refresh-indicator" id="btn-refresh-rooms" title="Atualizar salas">
+                            <i class="fas fa-sync-alt"></i> Atualizar
+                        </span>
+                    </div>
+                    <ul class="room-list" id="room-list">
+                        <!-- Gerado dinamicamente via JS -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- VIEW: CRIAR SALA -->
+            <div id="view-create-room" class="modal-view hidden">
+                <div class="create-form">
+                    <div class="form-group">
+                        <label><i class="fas fa-tag"></i> Nome da Sala</label>
+                        <input type="text" id="new-room-name" placeholder="Ex: Arena dos Campeões..." value="Sala Privada">
                     </div>
 
-                    <div class="input-group">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="password" placeholder="********" required autocomplete="current-password">
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label><i class="fas fa-map"></i> Mapa</label>
+                            <select id="new-room-map">
+                                <option value="Hexágono Cósmico">Hexágono Cósmico (Padrão)</option>
+                                <option value="Abismo Escuro">Abismo Escuro (Dificuldade Alta)</option>
+                                <option value="Ruínas Antigas">Ruínas Antigas (Obstáculos)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-users"></i> Capacidade</label>
+                            <select id="new-room-players">
+                                <option value="2">2 Combatentes (1v1)</option>
+                                <option value="4" selected>4 Combatentes (Padrão)</option>
+                                <option value="8">8 Combatentes (Battle Royale)</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <button type="submit" class="login-button" id="btn-submit">
-                        <span>CONECTAR</span> <i class="fas fa-arrow-right button-arrow"></i>
-                    </button>
+                    <div class="form-group checkbox-group">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="new-room-private">
+                            <span class="slider"></span>
+                        </label>
+                        <span class="toggle-label"><i class="fas fa-lock"></i> Sala Privada com Código de Acesso</span>
+                    </div>
 
-                    <div id="login-error">Erro ao autenticar!</div>
-                </form>
-
-                <div class="login-links">
-                    <a href="#" id="link-forgot">ESQUECEU A SENHA?</a>
+                    <div class="create-actions">
+                        <button class="btn-secondary" id="btn-cancel-create">VOLTAR</button>
+                        <button class="btn-primary" id="btn-confirm-create">
+                            <span>CRIAR E INICIAR</span> <i class="fas fa-rocket"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        // Registro do Service Worker PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js').catch(() => {});
-            });
-        }
+    <!-- MODAL DE RANKING GLOBAL -->
+    <div id="ranking-modal" class="modal-overlay hidden">
+        <div class="modal-content ranking-modal-content">
+            <button class="close-btn" id="close-ranking-btn" aria-label="Fechar"><i class="fas fa-times"></i></button>
+            <h2 class="modal-title"><i class="fas fa-trophy" style="color: #ffd700;"></i> RANKING GLOBAL</h2>
+            <p class="ranking-subtitle">Temporada 1: Despertar dos Titãs Cósmicos</p>
 
-        // Lógica inteligente de exibição de sessão existente (apenas UM botão verde na tela!)
-        try {
-            const token = localStorage.getItem('ygaming_token');
-            const playerInfo = JSON.parse(localStorage.getItem('arenaPlayerInfo') || '{}');
-            const arenaPlayer = JSON.parse(localStorage.getItem('arenaPlayer') || '{}');
-            const name = playerInfo.username || arenaPlayer.nickname;
+            <div class="ranking-podium">
+                <div class="podium-card silver">
+                    <div class="podium-rank">2º</div>
+                    <div class="podium-avatar"><img src="assets/elara.png" alt="2º Lugar"></div>
+                    <div class="podium-name">SHADOW_99</div>
+                    <div class="podium-pts">2.610 PTS</div>
+                </div>
+                <div class="podium-card gold">
+                    <div class="crown-icon"><i class="fas fa-crown"></i></div>
+                    <div class="podium-rank">1º</div>
+                    <div class="podium-avatar"><img src="assets/kaelen.png" alt="1º Lugar"></div>
+                    <div class="podium-name" id="rank-top1-name">CATARINO</div>
+                    <div class="podium-pts">2.850 PTS</div>
+                </div>
+                <div class="podium-card bronze">
+                    <div class="podium-rank">3º</div>
+                    <div class="podium-avatar"><img src="assets/malacor.png" alt="3º Lugar"></div>
+                    <div class="podium-name">VALKYRIE_X</div>
+                    <div class="podium-pts">2.420 PTS</div>
+                </div>
+            </div>
 
-            const quickBox = document.getElementById('quick-continue-box');
-            const formWrapper = document.getElementById('form-wrapper');
-            const nameEl = document.getElementById('saved-player-name');
+            <div class="ranking-table-wrap">
+                <table class="ranking-table">
+                    <thead>
+                        <tr>
+                            <th>POS</th>
+                            <th>JOGADOR</th>
+                            <th>HERÓI</th>
+                            <th>VITÓRIAS</th>
+                            <th>PONTOS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="current-user-row">
+                            <td>#1</td>
+                            <td><strong id="rank-user-name">CATARINO (VOCÊ)</strong></td>
+                            <td>KAELEN</td>
+                            <td>42</td>
+                            <td class="pts-cell">2.850</td>
+                        </tr>
+                        <tr>
+                            <td>#2</td>
+                            <td>SHADOW_99</td>
+                            <td>ELARA</td>
+                            <td>38</td>
+                            <td class="pts-cell">2.610</td>
+                        </tr>
+                        <tr>
+                            <td>#3</td>
+                            <td>VALKYRIE_X</td>
+                            <td>MALACOR</td>
+                            <td>35</td>
+                            <td class="pts-cell">2.420</td>
+                        </tr>
+                        <tr>
+                            <td>#4</td>
+                            <td>PHOENIX_BR</td>
+                            <td>MORWEN</td>
+                            <td>31</td>
+                            <td class="pts-cell">2.190</td>
+                        </tr>
+                        <tr>
+                            <td>#5</td>
+                            <td>GHOST_STRIKE</td>
+                            <td>SILAS</td>
+                            <td>28</td>
+                            <td class="pts-cell">2.050</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-            if (token && name && quickBox && formWrapper && nameEl) {
-                nameEl.innerText = name;
-                quickBox.style.display = 'flex';
-                formWrapper.style.display = 'none';
+    <!-- MODAL DE GUIA E CONTROLES -->
+    <div id="guide-modal" class="modal-overlay hidden">
+        <div class="modal-content guide-modal-content">
+            <button class="close-btn" id="close-guide-btn" aria-label="Fechar"><i class="fas fa-times"></i></button>
+            <h2 class="modal-title"><i class="fas fa-gamepad" style="color: #00d2ff;"></i> GUIA DE CONTROLES</h2>
 
-                const btnSwitch = document.getElementById('btn-show-form');
-                if (btnSwitch) {
-                    btnSwitch.addEventListener('click', () => {
-                        quickBox.style.display = 'none';
-                        formWrapper.style.display = 'block';
-                        const emailInput = document.getElementById('email');
-                        if (emailInput) emailInput.focus();
-                    });
-                }
-            }
-        } catch (e) {}
+            <div class="guide-grid">
+                <div class="guide-card">
+                    <div class="guide-card-header"><i class="fas fa-keyboard"></i> COMPUTADOR / TECLADO</div>
+                    <ul class="guide-list">
+                        <li><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> : Mover personagem em 360°</li>
+                        <li><kbd>ESPAÇO</kbd> : Correr (Sprint com gasto de estamina)</li>
+                        <li><kbd>MOUSE</kbd> : Mirar direção dos golpes/tiros</li>
+                        <li><kbd>CLIQUE ESQUERDO</kbd> : Atacar / Disparar</li>
+                    </ul>
+                </div>
 
-        document.getElementById('login-form').addEventListener('submit', function (event) {
-            event.preventDefault();
+                <div class="guide-card">
+                    <div class="guide-card-header"><i class="fas fa-mobile-alt"></i> CELULAR / TOUCH</div>
+                    <ul class="guide-list">
+                        <li><strong>Polegar Esquerdo:</strong> Joystick analógico flutuante</li>
+                        <li><strong>Botão de Corrida (Ícone Corredor):</strong> Sprint acelerado</li>
+                        <li><strong>Botão de Mira/Ataque (Alvo):</strong> Dispara na direção</li>
+                        <li><strong>Modo Obrigatório:</strong> Sempre jogue na horizontal</li>
+                    </ul>
+                </div>
+            </div>
 
-            const email = document.getElementById('email').value.trim();
-            const btn = document.getElementById('btn-submit');
-            const errorDiv = document.getElementById('login-error');
+            <div class="guide-tips-box">
+                <h4><i class="fas fa-lightbulb"></i> DICAS PARA VENCER NA ARENA:</h4>
+                <p>&bull; Fique atento à tempestade cósmica (zona vermelha) que encolhe a arena.</p>
+                <p>&bull; Administre sua munição/estamina: recarregar no meio do combate te deixa vulnerável.</p>
+                <p>&bull; Campeões corpo a corpo causam mais dano; campeões à distância controlam o espaço.</p>
+            </div>
+        </div>
+    </div>
 
-            errorDiv.style.display = 'none';
-            btn.innerHTML = '<span>AUTENTICANDO...</span> <i class="fas fa-spinner fa-spin button-arrow"></i>';
-            btn.disabled = true;
+    <!-- BLOQUEADOR DE ORIENTAÇÃO: OBRIGATÓRIO MODO PAISAGEM / HORIZONTAL -->
+    <div id="rotate-screen-overlay" class="rotate-screen-overlay">
+        <div class="rotate-screen-box">
+            <div class="rotate-animation">
+                <i class="fas fa-mobile-alt phone-icon"></i>
+                <i class="fas fa-undo-alt turn-arrow"></i>
+            </div>
+            <h2>GIRE SEU APARELHO</h2>
+            <p>Battle Arena foi criado para ser jogado <strong>exclusivamente na horizontal</strong> (Modo Paisagem).</p>
+            <div class="rotate-badge">
+                <i class="fas fa-arrows-alt-h"></i> MODO PAISAGEM
+            </div>
+            <button id="btn-fullscreen-rotate" class="btn-rotate-fullscreen">
+                <i class="fas fa-expand"></i> ATIVAR TELA CHEIA
+            </button>
+        </div>
+    </div>
 
-            setTimeout(() => {
-                const defaultName = (email.split('@')[0] || 'CATARINO').toUpperCase();
-                const mockPlayer = {
-                    id: "los_" + Date.now().toString(36),
-                    username: defaultName,
-                    email: email,
-                    coins: 1250,
-                    level: 15,
-                    avatar: ""
-                };
-
-                localStorage.setItem('ygaming_token', 'token_' + Date.now());
-                localStorage.setItem('arenaPlayerInfo', JSON.stringify(mockPlayer));
-
-                const existingPlayer = JSON.parse(localStorage.getItem('arenaPlayer') || '{}');
-                existingPlayer.nickname = defaultName;
-                localStorage.setItem('arenaPlayer', JSON.stringify(existingPlayer));
-
-                btn.innerHTML = '<span>CONECTADO!</span> <i class="fas fa-check button-arrow"></i>';
-
-                setTimeout(() => {
-                    window.location.href = 'menu.html';
-                }, 350);
-
-            }, 500);
-        });
-    </script>
+    <script src="script-menu.js"></script>
 </body>
 
 </html>
