@@ -1362,6 +1362,185 @@ kbd {
 }
 
 /* ======================================================== */
+/* POPUP DE NICKNAME & AVISOS PERSONALIZADOS                 */
+/* ======================================================== */
+.nick-modal-content {
+    max-width: 440px;
+    text-align: center;
+    padding: 28px 30px;
+}
+
+.nick-modal-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.nick-modal-avatar-wrap {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    padding: 3px;
+    background: linear-gradient(135deg, #00d2ff, #00ff88);
+    box-shadow: 0 0 22px rgba(0, 210, 255, 0.45);
+    margin-bottom: 4px;
+}
+
+.nick-modal-avatar-wrap img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: left top;
+    background: #060b18;
+}
+
+.nick-modal-subtitle {
+    font-size: 0.85em;
+    color: rgba(255, 255, 255, 0.65);
+    margin: 0;
+}
+
+.nick-modal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 22px;
+}
+
+.nick-modal-label {
+    font-family: var(--font-tech);
+    font-size: 0.8em;
+    font-weight: 800;
+    color: #00d2ff;
+    letter-spacing: 1.2px;
+}
+
+.nick-modal-input-row {
+    display: flex;
+    width: 100%;
+    gap: 10px;
+}
+
+.nick-modal-input-box {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(4, 9, 20, 0.85);
+    border: 1.5px solid rgba(0, 210, 255, 0.45);
+    border-radius: 12px;
+    padding: 10px 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.nick-modal-input-box:focus-within {
+    border-color: #00ff88;
+    box-shadow: 0 0 16px rgba(0, 255, 136, 0.35);
+}
+
+.nick-modal-input-box i {
+    color: #00d2ff;
+    font-size: 1.1em;
+}
+
+.nick-modal-input-box input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    font-family: var(--font-heading);
+    font-size: 1.15em;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    width: 100%;
+}
+
+.btn-random-nick {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: rgba(0, 210, 255, 0.14);
+    border: 1.5px solid rgba(0, 210, 255, 0.4);
+    color: #00d2ff;
+    font-size: 1.15em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-random-nick:hover {
+    background: #00d2ff;
+    color: #050813;
+    transform: rotate(18deg) scale(1.06);
+}
+
+.nick-modal-actions {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.nick-modal-actions button {
+    flex: 1;
+    justify-content: center;
+}
+
+/* Custom Alert Popup */
+.custom-popup-content {
+    max-width: 400px;
+    text-align: center;
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.custom-popup-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(0, 210, 255, 0.14);
+    border: 2px solid #00d2ff;
+    color: #00d2ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6em;
+    box-shadow: 0 0 20px rgba(0, 210, 255, 0.35);
+}
+
+.custom-popup-title {
+    font-family: var(--font-heading);
+    font-size: 1.2em;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: 1px;
+    margin: 0;
+}
+
+.custom-popup-msg {
+    font-size: 0.92em;
+    color: rgba(255, 255, 255, 0.82);
+    line-height: 1.5;
+    white-space: pre-line;
+    margin: 0 0 8px 0;
+}
+
+.btn-popup-ok {
+    width: 100%;
+    justify-content: center;
+}
+
+/* ======================================================== */
 /* 6. RESPONSIVIDADE & MODO PAISAGEM (MOBILE LANDSCAPE)     */
 /* ======================================================== */
 

@@ -191,9 +191,10 @@ if (btnFullscreen) {
 }
 
 // ==========================================
-// 3. CARREGAMENTO DE DADOS DO JOGADOR (NICKNAME DIRETO)
+// 3. CARREGAMENTO DE DADOS DO JOGADOR & POPUP DE NICKNAME
 // ==========================================
-const savedPlayer = JSON.parse(localStorage.getItem('arenaPlayer') || '{}');
+const savedPlayerRaw = localStorage.getItem('arenaPlayer');
+const savedPlayer = JSON.parse(savedPlayerRaw || '{}');
 const playerInfo = JSON.parse(localStorage.getItem('arenaPlayerInfo') || '{}');
 const activeNickname = (savedPlayer.nickname || playerInfo.username || 'GUERREIRO').slice(0, 16);
 
@@ -206,13 +207,106 @@ if (savedPlayer.charId) {
     if (idx !== -1) selectedCharIndex = idx;
 }
 
-// Edição de Nickname direta no Input
-const btnEditNick = document.getElementById('btn-edit-nick');
-if (btnEditNick && nickInput) {
-    btnEditNick.addEventListener('click', () => {
+// Elementos do Popup Personalizado de Nickname e Avisos
+const nickModal = document.getElementById('nick-modal');
+const modalNickInput = document.getElementById('modal-nick-input');
+const nickModalAvatar = document.getElementById('nick-modal-avatar');
+const btnSaveNickModal = document.getElementById('btn-save-nick-modal');
+const btnCancelNick = document.getElementById('btn-cancel-nick');
+const closeNickBtn = document.getElementById('close-nick-btn');
+const btnRandomNick = document.getElementById('btn-random-nick');
+
+const customPopupModal = document.getElementById('custom-popup-modal');
+const customPopupTitle = document.getElementById('custom-popup-title');
+const customPopupMsg = document.getElementById('custom-popup-msg');
+const customPopupIcon = document.getElementById('custom-popup-icon');
+const btnCustomPopupOk = document.getElementById('btn-custom-popup-ok');
+let customPopupCallback = null;
+
+function showArenaPopup(title, message, iconHtml = '<i class="fas fa-info-circle"></i>', onOk = null) {
+    if (!customPopupModal) return;
+    AudioEngine.play('click');
+    if (customPopupTitle) customPopupTitle.innerText = title;
+    if (customPopupMsg) customPopupMsg.innerText = message;
+    if (customPopupIcon) customPopupIcon.innerHTML = iconHtml;
+    customPopupCallback = onOk;
+    customPopupModal.classList.remove('hidden');
+}
+
+if (btnCustomPopupOk && customPopupModal) {
+    btnCustomPopupOk.addEventListener('click', () => {
         AudioEngine.play('click');
-        nickInput.focus();
-        nickInput.select();
+        customPopupModal.classList.add('hidden');
+        if (typeof customPopupCallback === 'function') {
+            const cb = customPopupCallback;
+            customPopupCallback = null;
+            cb();
+        }
+    });
+}
+
+function openNickModal() {
+    if (!nickModal) return;
+    AudioEngine.play('click');
+    const char = characters[selectedCharIndex] || characters[0];
+    if (nickModalAvatar) nickModalAvatar.src = char.img;
+    if (modalNickInput) {
+        modalNickInput.value = nickInput ? nickInput.value.trim() : activeNickname;
+        setTimeout(() => {
+            modalNickInput.focus();
+            modalNickInput.select();
+        }, 60);
+    }
+    nickModal.classList.remove('hidden');
+}
+
+function closeNickModal() {
+    if (!nickModal) return;
+    AudioEngine.play('click');
+    nickModal.classList.add('hidden');
+}
+
+function confirmNickFromModal() {
+    AudioEngine.play('play');
+    const raw = modalNickInput ? modalNickInput.value.trim().toUpperCase() : '';
+    const finalNick = (raw || 'GUERREIRO').slice(0, 16);
+    if (nickInput) nickInput.value = finalNick;
+    savePlayerData();
+    if (nickModal) nickModal.classList.add('hidden');
+}
+
+if (btnSaveNickModal) btnSaveNickModal.addEventListener('click', confirmNickFromModal);
+if (btnCancelNick) btnCancelNick.addEventListener('click', closeNickModal);
+if (closeNickBtn) closeNickBtn.addEventListener('click', closeNickModal);
+
+if (modalNickInput) {
+    modalNickInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            confirmNickFromModal();
+        }
+    });
+}
+
+if (btnRandomNick && modalNickInput) {
+    const sampleNicks = ['SHADOW_BR', 'TITAN_X', 'NOVA_KING', 'SOLAR_BLADE', 'DARK_WOLF', 'STORM_99', 'VALKYRIE', 'CYBER_HERO', 'OMEGA_PRO'];
+    btnRandomNick.addEventListener('click', () => {
+        AudioEngine.play('select');
+        const pick = sampleNicks[Math.floor(Math.random() * sampleNicks.length)];
+        modalNickInput.value = pick;
+        modalNickInput.focus();
+    });
+}
+
+// Abre o popup personalizado ao clicar no ícone de lápis ou se for o primeiro acesso
+const btnEditNick = document.getElementById('btn-edit-nick');
+if (btnEditNick) {
+    btnEditNick.addEventListener('click', openNickModal);
+}
+
+if (!savedPlayerRaw) {
+    window.addEventListener('load', () => {
+        setTimeout(openNickModal, 300);
     });
 }
 
@@ -340,11 +434,11 @@ if (btnInstallPwa) {
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
             if (isStandalone) {
-                alert('✅ Battle Arena já está instalado e rodando como aplicativo!');
+                showArenaPopup('APP INSTALADO', 'Battle Arena já está instalado e rodando como aplicativo!', '<i class="fas fa-check-circle" style="color:#00ff88;"></i>');
             } else if (isIOS) {
-                alert('📱 Para instalar no iPhone/iPad:\n1. Toque no ícone de Compartilhar (no Safari)\n2. Selecione "Adicionar à Tela de Início"');
+                showArenaPopup('INSTALAR NO IPHONE / IPAD', '1. Toque no ícone de Compartilhar (no Safari)\n2. Selecione "Adicionar à Tela de Início"', '<i class="fab fa-apple"></i>');
             } else {
-                alert('💡 Para instalar o Battle Arena:\nNo Chrome ou Edge, clique no ícone de instalar na barra de navegação ou no menu de opções.');
+                showArenaPopup('INSTALAR APLICATIVO', 'No Chrome ou Edge, clique no ícone de instalar na barra de navegação ou no menu do navegador.', '<i class="fas fa-download"></i>');
             }
         }
     });
@@ -412,23 +506,14 @@ if (closeGuideBtn && guideModal) {
     });
 }
 
-// Botão Meu Nick (Edição rápida de Nickname)
+// Botão Meu Nick (Abre o Popup Personalizado criado no jogo, sem prompt/alert do sistema)
 const btnOptions = document.getElementById('btn-options');
 if (btnOptions) {
-    btnOptions.addEventListener('click', () => {
-        AudioEngine.play('click');
-        const currentUser = nickInput ? nickInput.value.trim() : 'GUERREIRO';
-        const newNick = prompt('✏️ DIGITE SEU NICKNAME PARA JOGAR:', currentUser);
-        if (newNick && newNick.trim()) {
-            const clean = newNick.trim().toUpperCase().slice(0, 16);
-            if (nickInput) nickInput.value = clean;
-            savePlayerData();
-        }
-    });
+    btnOptions.addEventListener('click', openNickModal);
 }
 
 // Fechamento de Modais ao clicar no fundo
-[roomModal, rankingModal, guideModal].forEach(modalEl => {
+[roomModal, rankingModal, guideModal, nickModal, customPopupModal].forEach(modalEl => {
     if (modalEl) {
         modalEl.addEventListener('click', (e) => {
             if (e.target === modalEl) {
@@ -536,14 +621,20 @@ loadSocketIO(() => {
             }));
 
             if (data.isHost && data.room && data.room.isPrivate) {
-                alert(`🎮 Sala Privada Criada!\nCódigo: #${data.code}\nCompartilhe com seus amigos!`);
+                showArenaPopup(
+                    'SALA PRIVADA CRIADA!',
+                    `Código de acesso: #${data.code}\nCompartilhe com seus amigos para entrarem!`,
+                    '<i class="fas fa-key" style="color:#00ff88;"></i>',
+                    () => { window.location.href = `arena.html?room=${data.code}`; }
+                );
+                return;
             }
 
             window.location.href = `arena.html?room=${data.code}`;
         });
 
         socket.on('join_error', (err) => {
-            alert(`❌ ${err.message || 'Erro ao entrar na sala.'}`);
+            showArenaPopup('ERRO NA SALA', err.message || 'Erro ao entrar na sala.', '<i class="fas fa-exclamation-triangle" style="color:#ff3d68;"></i>');
             const btn = document.getElementById('btn-confirm-create');
             if (btn) btn.innerHTML = '<span>CRIAR E INICIAR</span> <i class="fas fa-rocket"></i>';
         });
@@ -648,7 +739,7 @@ if (btnJoinCode && inputCode) {
     const submitCode = () => {
         const code = inputCode.value.trim().toUpperCase();
         if (!code) {
-            alert('Por favor, informe o código da sala!');
+            showArenaPopup('CÓDIGO NECESSÁRIO', 'Por favor, informe o código da sala para entrar!', '<i class="fas fa-key" style="color:#ffd700;"></i>');
             return;
         }
         entrarNaSala(code);

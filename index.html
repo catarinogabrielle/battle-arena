@@ -350,6 +350,55 @@
         </div>
     </div>
 
+    <!-- POPUP PERSONALIZADO PARA DIGITAR O NICKNAME (SEM ALERT/PROMPT DO SISTEMA) -->
+    <div id="nick-modal" class="modal-overlay hidden">
+        <div class="modal-content nick-modal-content">
+            <button class="close-btn" id="close-nick-btn" aria-label="Fechar"><i class="fas fa-times"></i></button>
+
+            <div class="nick-modal-header">
+                <div class="nick-modal-avatar-wrap">
+                    <img src="assets/kaelen.png" alt="Herói" id="nick-modal-avatar">
+                </div>
+                <h2 class="modal-title"><i class="fas fa-user-astronaut" style="color: #00d2ff;"></i> IDENTIFICAÇÃO DO COMBATENTE</h2>
+                <p class="nick-modal-subtitle">Escolha como seu nome aparecerá na Arena e no Ranking</p>
+            </div>
+
+            <div class="nick-modal-body">
+                <label for="modal-nick-input" class="nick-modal-label">SEU NICKNAME (MÁX. 16 LETRAS)</label>
+                <div class="nick-modal-input-row">
+                    <div class="nick-modal-input-box">
+                        <i class="fas fa-id-badge"></i>
+                        <input type="text" id="modal-nick-input" maxlength="16" placeholder="Ex: SHADOW_BR" spellcheck="false" autocomplete="off">
+                    </div>
+                    <button type="button" class="btn-random-nick" id="btn-random-nick" title="Gerar Nickname Aleatório">
+                        <i class="fas fa-dice"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="nick-modal-actions">
+                <button type="button" class="btn-secondary" id="btn-cancel-nick">CANCELAR</button>
+                <button type="button" class="btn-primary" id="btn-save-nick-modal">
+                    <span>SALVAR E JOGAR</span> <i class="fas fa-check"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP DE AVISO PERSONALIZADO (SUBSTITUI O .ALERT DO NAVEGADOR) -->
+    <div id="custom-popup-modal" class="modal-overlay hidden">
+        <div class="modal-content custom-popup-content">
+            <div class="custom-popup-icon" id="custom-popup-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <h3 class="custom-popup-title" id="custom-popup-title">AVISO DA ARENA</h3>
+            <p class="custom-popup-msg" id="custom-popup-msg">Mensagem informativa</p>
+            <button type="button" class="btn-primary btn-popup-ok" id="btn-custom-popup-ok">
+                <span>ENTENDIDO</span> <i class="fas fa-check"></i>
+            </button>
+        </div>
+    </div>
+
     <!-- BLOQUEADOR DE ORIENTAÇÃO: OBRIGATÓRIO MODO PAISAGEM / HORIZONTAL -->
     <div id="rotate-screen-overlay" class="rotate-screen-overlay">
         <div class="rotate-screen-box">
