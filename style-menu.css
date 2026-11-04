@@ -373,12 +373,12 @@ body {
 
 .char-thumb {
     flex: 1;
-    max-width: 102px;
-    aspect-ratio: 2752 / 1568;
+    max-width: 108px;
+    aspect-ratio: 16 / 10;
     height: auto;
-    border-radius: 8px;
-    background: rgba(8, 14, 28, 0.8);
-    border: 2px solid rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+    background: rgba(8, 14, 28, 0.85);
+    border: 2px solid rgba(255, 255, 255, 0.22);
     cursor: pointer;
     overflow: hidden;
     position: relative;
@@ -386,13 +386,30 @@ body {
 }
 
 .char-thumb img {
-    width: 100%;
+    width: 155%;
     height: 100%;
     object-fit: cover;
-    object-position: left center;
-    opacity: 0.65;
+    object-position: left 18%;
+    opacity: 0.72;
     transition: opacity 0.2s, transform 0.2s;
     display: block;
+}
+
+.thumb-name {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(4, 8, 18, 0.95) 0%, rgba(4, 8, 18, 0.65) 70%, transparent 100%);
+    color: #ffffff;
+    font-family: var(--font-heading);
+    font-size: 0.62em;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-align: center;
+    padding: 6px 2px 2px 2px;
+    pointer-events: none;
+    text-shadow: 0 1px 3px #000;
 }
 
 .char-thumb:hover {
@@ -1602,25 +1619,34 @@ kbd {
     }
 
     .champion-card-frame {
-        max-width: 55vw;
-        max-height: calc(100dvh - 96px);
+        max-width: 56vw;
+        max-height: calc(100dvh - 118px);
         border-radius: 12px;
     }
 
     .roster-bar {
-        max-width: 55vw;
-        gap: 2px;
+        max-width: 58vw;
+        width: 100%;
+        gap: 3px;
     }
 
     .roster-label { display: none; }
 
     .character-roster {
-        gap: 6px;
+        gap: 8px;
+        width: 100%;
     }
 
     .char-thumb {
-        max-width: 62px;
-        border-radius: 6px;
+        max-width: 96px;
+        min-height: 52px;
+        aspect-ratio: 15 / 10;
+        border-radius: 8px;
+    }
+
+    .thumb-name {
+        font-size: 0.58em;
+        padding: 4px 2px 2px 2px;
     }
 
     /* Ações no Mobile Landscape */

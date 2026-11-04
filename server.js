@@ -15,8 +15,50 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3000;
 
 // Servir arquivos estáticos do jogo
+app.use(express.json());
 app.use(express.static(__dirname));
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
+
+// Ranking Global Dinâmico em Memória / API
+const globalRanking = [
+    { name: 'SHADOW_99', charId: 'elara', hero: 'ELARA', wins: 14, kills: 38, pts: 1460 },
+    { name: 'VALKYRIE_X', charId: 'malacor', hero: 'MALACOR', wins: 11, kills: 29, pts: 1180 },
+    { name: 'PHOENIX_BR', charId: 'morwen', hero: 'MORWEN', wins: 8, kills: 22, pts: 890 },
+    { name: 'GHOST_STRIKE', charId: 'silas', hero: 'SILAS', wins: 6, kills: 17, pts: 680 },
+    { name: 'SOLAR_KNIGHT', charId: 'kaelen', hero: 'KAELEN', wins: 4, kills: 12, pts: 450 }
+];
+
+app.get('/api/ranking', (req, res) => {
+    const sorted = [...globalRanking].sort((a, b) => b.pts - a.pts || b.wins - a.wins);
+    res.json(sorted.slice(0, 20));
+});
+
+app.post('/api/ranking', (req, res) => {
+    const { name, charId, hero, wins, kills, pts } = req.body || {};
+    if (!name || typeof pts !== 'number') {
+        return res.status(400).json({ error: 'Dados inválidos' });
+    }
+    const cleanName = String(name).trim().toUpperCase().slice(0, 16);
+    const existing = globalRanking.find(r => r.name.toUpperCase() === cleanName);
+    if (existing) {
+        existing.charId = charId || existing.charId || 'kaelen';
+        existing.hero = hero || existing.hero || 'KAELEN';
+        existing.wins = Math.max(existing.wins || 0, Number(wins) || 0);
+        existing.kills = Math.max(existing.kills || 0, Number(kills) || 0);
+        existing.pts = Math.max(existing.pts || 0, Number(pts) || 0);
+    } else {
+        globalRanking.push({
+            name: cleanName,
+            charId: charId || 'kaelen',
+            hero: (hero || charId || 'KAELEN').toUpperCase(),
+            wins: Number(wins) || 0,
+            kills: Number(kills) || 0,
+            pts: Number(pts) || 0
+        });
+    }
+    const sorted = [...globalRanking].sort((a, b) => b.pts - a.pts || b.wins - a.wins);
+    res.json(sorted.slice(0, 20));
+});
 
 // Rotas explícitas para garantir carregamento estático em Serverless (Vercel)
 app.get('/style-menu.css', (req, res) => res.sendFile(path.join(__dirname, 'style-menu.css')));

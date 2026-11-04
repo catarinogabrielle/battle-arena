@@ -407,10 +407,47 @@ class Projectile {
 }
 
 // ==========================================
-// CLASSE JOGADOR (CLIENTE & IA AVANÇADA)
+// ==========================================
+// PERFIS DE HABILIDADE DA IA (SIMULAÇÃO DE JOGADORES REAIS)
+// ==========================================
+const AI_TIERS = {
+    easy: {
+        label: 'Iniciante',
+        speedMult: 0.78,
+        cooldownMult: 1.65,
+        aimError: 0.30,
+        leadMult: 0.15,
+        dodgeChance: 0.22,
+        canSprint: false,
+        aggroRange: 640
+    },
+    medium: {
+        label: 'Intermediário',
+        speedMult: 0.87,
+        cooldownMult: 1.25,
+        aimError: 0.16,
+        leadMult: 0.55,
+        dodgeChance: 0.50,
+        canSprint: true,
+        aggroRange: 760
+    },
+    hard: {
+        label: 'Veterano',
+        speedMult: 0.94,
+        cooldownMult: 1.05,
+        aimError: 0.07,
+        leadMult: 0.85,
+        dodgeChance: 0.78,
+        canSprint: true,
+        aggroRange: 860
+    }
+};
+
+// ==========================================
+// CLASSE JOGADOR (CLIENTE & IA MULTI-NÍVEL)
 // ==========================================
 class Player {
-    constructor(id, name, color, x, y, isBot, weaponType, controls, charId) {
+    constructor(id, name, color, x, y, isBot, weaponType, controls, charId, aiTier = 'medium') {
         this.id = id;
         this.name = name;
         this.color = color;
@@ -424,6 +461,10 @@ class Player {
         this.weapon = weaponType;
         this.controls = controls;
         this.charId = charId;
+        this.kills = 0;
+
+        this.aiTier = aiTier;
+        this.aiProfile = AI_TIERS[aiTier] || AI_TIERS.medium;
 
         this.angle = 0;
         this.cooldown = 0;
@@ -442,6 +483,8 @@ class Player {
         this.currentTarget = null;
         this.strafeDir = Math.random() > 0.5 ? 1 : -1;
         this.strafeTimer = 0;
+        this.dodgeCooldown = 0;
+        this.willDodgeCurrent = false;
     }
 
     update() {
@@ -508,28 +551,30 @@ class Player {
             else elements.damageOverlay.classList.remove('pulse-red');
         } else {
             // ==========================================
-            // IA AVANÇADA (ESQUIVA + KITING + PREDIÇÃO + SPRINT TÁTICO)
+            // IA COM NÍVEIS VARIADOS (FÁCIL, MÉDIO, DIFÍCIL)
             // ==========================================
-            let speed = sWalk * 0.96;
+            const prof = this.aiProfile;
+            let speed = sWalk * prof.speedMult;
             let distToZone = Math.hypot(this.x - Game.zone.x, this.y - Game.zone.y);
+            if (this.dodgeCooldown > 0) this.dodgeCooldown--;
 
             // 1. ZONA SEGURA (PRIORIDADE ABSOLUTA)
             if (distToZone > Game.zone.radius - 75) {
                 this.angle = Math.atan2(Game.zone.y - this.y, Game.zone.x - this.x);
-                moveX = Math.cos(this.angle) * sRun * 1.05;
-                moveY = Math.sin(this.angle) * sRun * 1.05;
+                moveX = Math.cos(this.angle) * sRun * 0.98;
+                moveY = Math.sin(this.angle) * sRun * 0.98;
                 this.botState = 'ZONE_FLEE';
             } else {
-                // 2. ESQUIVA INTELIGENTE DE PROJÉTEIS (DODGE 90°)
+                // 2. ESQUIVA DE PROJÉTEIS BASEADA NO NÍVEL DO BOT
                 let incomingProj = null;
                 for (let pr of Game.projectiles) {
                     if (pr.ownerId !== this.id) {
                         let d = Math.hypot(pr.x - this.x, pr.y - this.y);
-                        if (d < 220) {
+                        if (d < 200) {
                             let prAngle = Math.atan2(pr.vy, pr.vx);
                             let toBotAngle = Math.atan2(this.y - pr.y, this.x - pr.x);
                             let diffAngle = Math.abs(prAngle - toBotAngle);
-                            if (diffAngle < 0.48 || diffAngle > Math.PI * 2 - 0.48) {
+                            if (diffAngle < 0.45 || diffAngle > Math.PI * 2 - 0.45) {
                                 incomingProj = pr;
                                 break;
                             }
@@ -537,88 +582,113 @@ class Player {
                     }
                 }
 
-                if (incomingProj) {
+                if (incomingProj && this.dodgeCooldown <= 0) {
+                    this.willDodgeCurrent = Math.random() < prof.dodgeChance;
+                    this.dodgeCooldown = 35;
+                }
+
+                if (incomingProj && this.willDodgeCurrent) {
                     const prAngle = Math.atan2(incomingProj.vy, incomingProj.vx);
                     const dodgeAngle = prAngle + (Math.PI / 2) * this.strafeDir;
-                    moveX = Math.cos(dodgeAngle) * sRun;
-                    moveY = Math.sin(dodgeAngle) * sRun;
+                    const dodgeSpd = prof.canSprint ? sRun * 0.92 : speed * 1.1;
+                    moveX = Math.cos(dodgeAngle) * dodgeSpd;
+                    moveY = Math.sin(dodgeAngle) * dodgeSpd;
                     this.botState = 'DODGING';
                 } else {
-                    // 3. SELEÇÃO DE ALVO INTELIGENTE (MENOR HP OU MAIS PRÓXIMO)
-                    let newClosest = null;
-                    let minDist = Infinity;
-                    let lowestHpTarget = null;
-                    let lowestHp = Infinity;
+                    // 3. SELEÇÃO DE ALVO COM SISTEMA ANTI-FOCUS (EVITA TODOS OS BOTS FOCAREM SÓ NO JOGADOR)
+                    let bestTarget = null;
+                    let bestScore = Infinity;
+
+                    // Conta quantos outros bots já estão focando no jogador P1
+                    let botsTargetingP1 = 0;
+                    Game.players.forEach(other => {
+                        if (other.isBot && other !== this && other.alive && other.currentTarget && other.currentTarget.id === 'P1') {
+                            botsTargetingP1++;
+                        }
+                    });
 
                     Game.players.forEach(p => {
                         if (p !== this && p.alive) {
                             let d = Math.hypot(p.x - this.x, p.y - this.y);
-                            if (d < minDist) { minDist = d; newClosest = p; }
-                            if (p.hp < lowestHp) { lowestHp = p.hp; lowestHpTarget = p; }
+                            let score = d;
+                            // Penaliza focar no jogador humano se já houver outro bot focando nele (faz os bots lutarem entre si também)
+                            if (p.id === 'P1' && botsTargetingP1 >= 1 && d > 190) {
+                                score += 320 * botsTargetingP1;
+                            }
+                            // Leve preferência por alvos com vida muito baixa apenas para bots médios/difíceis
+                            if (prof !== AI_TIERS.easy && p.hp < 140 && d < 420) {
+                                score -= 90;
+                            }
+                            if (score < bestScore) {
+                                bestScore = score;
+                                bestTarget = p;
+                            }
                         }
                     });
 
-                    let target = (lowestHpTarget && minDist < 450 && lowestHpTarget.hp < 160) ? lowestHpTarget : newClosest;
-                    this.currentTarget = target;
+                    this.currentTarget = bestTarget;
                     let closest = this.currentTarget;
+                    let minDist = closest ? Math.hypot(closest.x - this.x, closest.y - this.y) : Infinity;
 
                     // 4. KITING DURANTE RECARGA
-                    if (this.reloadTimer > 0 && closest && minDist < 360) {
+                    if (this.reloadTimer > 0 && closest && minDist < 320 && prof !== AI_TIERS.easy) {
                         this.botState = 'KITING';
                         this.angle = Math.atan2(this.y - closest.y, this.x - closest.x);
-                        moveX = Math.cos(this.angle + (this.strafeDir * 0.4)) * sRun * 0.88;
-                        moveY = Math.sin(this.angle + (this.strafeDir * 0.4)) * sRun * 0.88;
-                    } else if (this.hp < this.maxHp * 0.25 && closest && minDist < 500 && this.lastDamageTimer < 150) {
+                        moveX = Math.cos(this.angle + (this.strafeDir * 0.45)) * speed;
+                        moveY = Math.sin(this.angle + (this.strafeDir * 0.45)) * speed;
+                    } else if (this.hp < this.maxHp * 0.22 && closest && minDist < 460 && this.lastDamageTimer < 140 && prof !== AI_TIERS.easy) {
                         this.botState = 'FLEE';
                         this.angle = Math.atan2(this.y - closest.y, this.x - closest.x);
-                        moveX = Math.cos(this.angle) * sRun * 0.88;
-                        moveY = Math.sin(this.angle) * sRun * 0.88;
-                    } else if (closest && minDist < 850) {
+                        moveX = Math.cos(this.angle) * speed * 1.05;
+                        moveY = Math.sin(this.angle) * speed * 1.05;
+                    } else if (closest && minDist < prof.aggroRange) {
                         this.botState = 'ATTACK';
                         this.strafeTimer--;
                         if (this.strafeTimer <= 0) {
                             this.strafeDir *= -1;
-                            this.strafeTimer = 35 + Math.random() * 55;
+                            this.strafeTimer = 40 + Math.random() * 60;
                         }
 
-                        // MIRA PREDITIVA PROPORCIONAL À DISTÂNCIA
-                        const leadFactor = Math.min(16, minDist / 18);
+                        // MIRA PREDITIVA AJUSTADA PELO NÍVEL DO BOT
+                        const leadFactor = Math.min(14, minDist / 20) * prof.leadMult;
                         let aimX = closest.x + (closest.vx || 0) * leadFactor;
                         let aimY = closest.y + (closest.vy || 0) * leadFactor;
                         this.angle = Math.atan2(aimY - this.y, aimX - this.x);
 
                         if (this.weapon === 'melee') {
                             if (minDist > 85) {
-                                // Usa sprint tático e zigue-zague para encostar no alvo
-                                const approachSpeed = (minDist > 130 && minDist < 320) ? sRun * 0.92 : speed * 1.12;
-                                const weave = Math.sin((Game.frameCount + this.id.charCodeAt(1) * 20) * 0.08) * 0.35;
+                                const useSprint = prof.canSprint && minDist > 140 && minDist < 280;
+                                const approachSpeed = useSprint ? sRun * 0.86 : speed * 1.04;
+                                const weaveAmp = prof === AI_TIERS.easy ? 0.1 : 0.28;
+                                const weave = Math.sin((Game.frameCount + this.id.charCodeAt(1) * 20) * 0.07) * weaveAmp;
                                 moveX = Math.cos(this.angle + weave) * approachSpeed;
                                 moveY = Math.sin(this.angle + weave) * approachSpeed;
-                            } else if (minDist < 48) {
-                                moveX = -Math.cos(this.angle) * speed * 0.5;
-                                moveY = -Math.sin(this.angle) * speed * 0.5;
+                            } else if (minDist < 46) {
+                                moveX = -Math.cos(this.angle) * speed * 0.45;
+                                moveY = -Math.sin(this.angle) * speed * 0.45;
                             } else {
-                                moveX = Math.cos(this.angle + (Math.PI / 2 * this.strafeDir)) * speed * 0.85;
-                                moveY = Math.sin(this.angle + (Math.PI / 2 * this.strafeDir)) * speed * 0.85;
+                                moveX = Math.cos(this.angle + (Math.PI / 2 * this.strafeDir)) * speed * 0.8;
+                                moveY = Math.sin(this.angle + (Math.PI / 2 * this.strafeDir)) * speed * 0.8;
                             }
 
-                            if (minDist < 95 && this.cooldown <= 0 && this.currentAmmo > 0 && this.reloadTimer <= 0) {
+                            if (minDist < 92 && this.cooldown <= 0 && this.currentAmmo > 0 && this.reloadTimer <= 0) {
+                                this.angle += (Math.random() - 0.5) * prof.aimError;
                                 this.attack();
                             }
                         } else {
-                            if (minDist < 210) {
-                                moveX = -Math.cos(this.angle) * speed * 1.05;
-                                moveY = -Math.sin(this.angle) * speed * 1.05;
-                            } else if (minDist > 370) {
-                                moveX = Math.cos(this.angle) * speed * 1.0;
-                                moveY = Math.sin(this.angle) * speed * 1.0;
+                            if (minDist < 195) {
+                                moveX = -Math.cos(this.angle) * speed * 0.95;
+                                moveY = -Math.sin(this.angle) * speed * 0.95;
+                            } else if (minDist > 360) {
+                                moveX = Math.cos(this.angle) * speed * 0.95;
+                                moveY = Math.sin(this.angle) * speed * 0.95;
                             } else {
-                                moveX = Math.cos(this.angle + (Math.PI / 2 * this.strafeDir)) * speed * 0.88;
-                                moveY = Math.sin(this.angle + (Math.PI / 2 * this.strafeDir)) * speed * 0.88;
+                                moveX = Math.cos(this.angle + (Math.PI / 2 * this.strafeDir)) * speed * 0.82;
+                                moveY = Math.sin(this.angle + (Math.PI / 2 * this.strafeDir)) * speed * 0.82;
                             }
 
-                            if (minDist < 580 && this.cooldown <= 0 && this.currentAmmo > 0 && this.reloadTimer <= 0) {
-                                let error = (minDist > 300) ? (Math.random() - 0.5) * 0.1 : 0;
+                            if (minDist < 540 && this.cooldown <= 0 && this.currentAmmo > 0 && this.reloadTimer <= 0) {
+                                let error = (Math.random() - 0.5) * prof.aimError * (minDist > 260 ? 1.35 : 0.85);
                                 this.angle += error;
                                 this.attack();
                             }
@@ -663,7 +733,8 @@ class Player {
     attack() {
         this.attackFrame = this.maxAttackFrames;
         this.currentAmmo--;
-        if (this.currentAmmo <= 0) this.reloadTimer = CONFIG.reloadFrames;
+        const cdMult = this.isBot ? this.aiProfile.cooldownMult : 1;
+        if (this.currentAmmo <= 0) this.reloadTimer = Math.round(CONFIG.reloadFrames * cdMult);
 
         if (this.charId === 'lyra') {
             this.hp = Math.min(this.maxHp, this.hp + 40);
@@ -671,7 +742,7 @@ class Player {
         }
 
         if (this.weapon === 'melee') {
-            this.cooldown = 20;
+            this.cooldown = Math.round(20 * cdMult);
             let range = (this.charId === 'silas') ? 75 : 95;
             Game.players.forEach(p => {
                 if (p !== this && p.alive) {
@@ -688,7 +759,7 @@ class Player {
                 }
             });
         } else {
-            this.cooldown = 32;
+            this.cooldown = Math.round(32 * cdMult);
             Game.projectiles.push(new Projectile(this.x, this.y, this.angle, this.color, this.id, this.name, this.charId));
         }
     }
@@ -700,7 +771,16 @@ class Player {
         if (this.hp <= 0) {
             this.alive = false;
             this.hp = 0;
-            Game.eliminatedOrder.push({ name: this.name, color: this.color });
+            const killerPlayer = Game.players.find(p => p.name === killer);
+            if (killerPlayer && killerPlayer !== this) {
+                killerPlayer.kills = (killerPlayer.kills || 0) + 1;
+            }
+            Game.eliminatedOrder.push({
+                name: this.name,
+                color: this.color,
+                charId: this.charId,
+                kills: this.kills || 0
+            });
             Game.addKillMsg(this.name, killer, this.color);
             if (this.id === 'P1') Game.startSpectating();
             Game.checkWin();
@@ -923,22 +1003,34 @@ const Game = {
         const cY = canvas.height / 2;
         const spawnR = Math.min(canvas.width, canvas.height) * 0.34;
 
+        // Perfis variados de partida para simular lobbies reais com níveis diferentes
+        const matchProfiles = [
+            { name: 'PARTIDA CASUAL (Maioria Iniciante)', tiers: ['easy', 'easy', 'easy', 'medium', 'hard'] },
+            { name: 'PARTIDA MISTA (Níveis Variados)', tiers: ['easy', 'easy', 'medium', 'medium', 'hard'] },
+            { name: 'PARTIDA EQUILIBRADA (Intermediária)', tiers: ['easy', 'medium', 'medium', 'medium', 'hard'] },
+            { name: 'PARTIDA COMPETITIVA (Maioria Veterano)', tiers: ['easy', 'medium', 'hard', 'hard', 'hard'] }
+        ];
+
+        const chosenProfile = matchProfiles[Math.floor(Math.random() * matchProfiles.length)];
+        // Embaralha os níveis entre os 5 bots da partida
+        const shuffledTiers = [...chosenProfile.tiers].sort(() => Math.random() - 0.5);
+
         const botConfigs = [
-            { id: 'B1', name: 'MALACOR [IA]', color: '#B19CD9', weapon: 'ranged', charId: 'malacor', angle: 0 },
-            { id: 'B2', name: 'KAELEN [IA]', color: '#00d2ff', weapon: 'melee', charId: 'kaelen', angle: (Math.PI * 2) / 5 },
-            { id: 'B3', name: 'ELARA [IA]', color: '#A7FF83', weapon: 'ranged', charId: 'elara', angle: (Math.PI * 4) / 5 },
-            { id: 'B4', name: 'SILAS [IA]', color: '#ffffff', weapon: 'melee', charId: 'silas', angle: (Math.PI * 6) / 5 },
-            { id: 'B5', name: 'MORWEN [IA]', color: '#ff3d68', weapon: 'ranged', charId: 'morwen', angle: (Math.PI * 8) / 5 }
+            { id: 'B1', name: 'SHADOW_99', color: '#B19CD9', weapon: 'ranged', charId: 'malacor', angle: 0 },
+            { id: 'B2', name: 'SOLAR_KNIGHT', color: '#00d2ff', weapon: 'melee', charId: 'kaelen', angle: (Math.PI * 2) / 5 },
+            { id: 'B3', name: 'VALKYRIE_X', color: '#A7FF83', weapon: 'ranged', charId: 'elara', angle: (Math.PI * 4) / 5 },
+            { id: 'B4', name: 'GHOST_STRIKE', color: '#ffffff', weapon: 'melee', charId: 'silas', angle: (Math.PI * 6) / 5 },
+            { id: 'B5', name: 'PHOENIX_BR', color: '#ff3d68', weapon: 'ranged', charId: 'morwen', angle: (Math.PI * 8) / 5 }
         ];
 
         this.players = [
             new Player('P1', savedData.nickname, savedData.color, cX, cY, false, savedData.weapon,
-                { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD' }, savedData.charId),
-            ...botConfigs.map(b => new Player(
+                { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD' }, savedData.charId, 'hard'),
+            ...botConfigs.map((b, idx) => new Player(
                 b.id, b.name, b.color,
                 cX + Math.cos(b.angle) * spawnR,
                 cY + Math.sin(b.angle) * spawnR,
-                true, b.weapon, null, b.charId
+                true, b.weapon, null, b.charId, shuffledTiers[idx]
             ))
         ];
 
@@ -1172,15 +1264,81 @@ const Game = {
     },
 
     showRanking(vencedor, customRanking = null) {
-        const ranking = customRanking || (vencedor ? [vencedor, ...this.eliminatedOrder.reverse()] : [...this.eliminatedOrder.reverse()]);
+        const reversedElims = [...this.eliminatedOrder].reverse();
+        const ranking = customRanking || (vencedor ? [vencedor, ...reversedElims] : reversedElims);
         elements.rankingList.innerHTML = '';
+
+        // Atualiza o Ranking Real (localStorage + Servidor)
+        const heroMap = {
+            kaelen: 'Kaelen',
+            elara: 'Elara',
+            malacor: 'Malacor',
+            lyra: 'Lyra',
+            silas: 'Silas',
+            morwen: 'Morwen'
+        };
+
+        let lb = [];
+        try {
+            const raw = localStorage.getItem('arenaLeaderboard');
+            if (raw) lb = JSON.parse(raw);
+        } catch (e) { lb = []; }
+
+        let localPlayerEntry = null;
+
         ranking.forEach((player, index) => {
             const pos = index + 1;
+            const liveObj = this.players.find(p => p.name === player.name);
+            const kills = (liveObj && typeof liveObj.kills === 'number') ? liveObj.kills : (player.kills || 0);
+            const charId = (liveObj && liveObj.charId) || player.charId || 'kaelen';
+            const placePts = pos === 1 ? 100 : (pos === 2 ? 50 : (pos === 3 ? 25 : 10));
+            const totalMatchPts = placePts + (kills * 25);
+
+            // Atualiza ou insere no leaderboard local
+            let entry = lb.find(item => item.name.toUpperCase() === player.name.toUpperCase());
+            if (!entry) {
+                entry = {
+                    name: player.name.toUpperCase(),
+                    charId: charId,
+                    hero: heroMap[charId] || 'Kaelen',
+                    wins: 0,
+                    kills: 0,
+                    pts: 200
+                };
+                lb.push(entry);
+            }
+            entry.charId = charId;
+            entry.hero = heroMap[charId] || entry.hero || 'Kaelen';
+            if (pos === 1) entry.wins = (entry.wins || 0) + 1;
+            entry.kills = (entry.kills || 0) + kills;
+            entry.pts = (entry.pts || 0) + totalMatchPts;
+
+            if (player.name.toUpperCase() === savedData.nickname.toUpperCase()) {
+                localPlayerEntry = entry;
+            }
+
             const item = document.createElement('div');
             item.className = `rank-item ${pos === 1 ? 'winner' : ''}`;
-            item.innerHTML = `<span class="rank-pos">#${pos}</span><span class="rank-name" style="color:${player.color}">${player.name}</span><span class="rank-status">${pos === 1 ? 'VENCEDOR' : 'MORTO'}</span>`;
+            item.innerHTML = `
+                <span class="rank-pos">#${pos}</span>
+                <span class="rank-name" style="color:${player.color}">${player.name}</span>
+                <span class="rank-status">${kills} ABATE${kills === 1 ? '' : 'S'} • +${totalMatchPts} PTS</span>
+            `;
             elements.rankingList.appendChild(item);
         });
+
+        try {
+            lb.sort((a, b) => b.pts - a.pts);
+            localStorage.setItem('arenaLeaderboard', JSON.stringify(lb));
+        } catch (e) {}
+
+        if (localPlayerEntry) {
+            fetch('/api/ranking', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(localPlayerEntry)
+            }).catch(() => {});
+        }
 
         setTimeout(() => {
             elements.gameOver.classList.remove('hidden');

@@ -327,8 +327,8 @@ if (nickInput) {
 function savePlayerData() {
     const config = getPlayerConfig();
     localStorage.setItem('arenaPlayer', JSON.stringify(config));
-    if (rankUserName) rankUserName.innerText = `${config.nickname} (VOCÊ)`;
-    if (rankTop1Name) rankTop1Name.innerText = config.nickname;
+    RankingSystem.ensurePlayerEntry(config.nickname, config.charId);
+    RankingSystem.render();
 }
 
 function getPlayerConfig() {
@@ -341,6 +341,152 @@ function getPlayerConfig() {
         charId: char.id
     };
 }
+
+// ==========================================
+// 3.5 SISTEMA DE RANKING REAL (LOCAL + SERVIDOR)
+// ==========================================
+const RankingSystem = {
+    defaultEntries: [
+        { name: 'SHADOW_99', charId: 'elara', hero: 'ELARA', wins: 14, kills: 38, pts: 1460 },
+        { name: 'VALKYRIE_X', charId: 'malacor', hero: 'MALACOR', wins: 11, kills: 29, pts: 1180 },
+        { name: 'PHOENIX_BR', charId: 'morwen', hero: 'MORWEN', wins: 8, kills: 22, pts: 890 },
+        { name: 'GHOST_STRIKE', charId: 'silas', hero: 'SILAS', wins: 6, kills: 17, pts: 680 },
+        { name: 'SOLAR_KNIGHT', charId: 'kaelen', hero: 'KAELEN', wins: 4, kills: 12, pts: 450 }
+    ],
+
+    getList() {
+        let list = [];
+        try {
+            list = JSON.parse(localStorage.getItem('arenaLeaderboard') || '[]');
+        } catch (e) {
+            list = [];
+        }
+        if (!Array.isArray(list) || list.length === 0) {
+            list = [...this.defaultEntries];
+            localStorage.setItem('arenaLeaderboard', JSON.stringify(list));
+        }
+        return list;
+    },
+
+    saveList(list) {
+        localStorage.setItem('arenaLeaderboard', JSON.stringify(list));
+    },
+
+    ensurePlayerEntry(nickname, charId) {
+        const cleanName = (nickname || 'GUERREIRO').trim().toUpperCase().slice(0, 16);
+        const heroObj = characters.find(c => c.id === charId) || characters[0];
+        const list = this.getList();
+        let entry = list.find(item => item.name.toUpperCase() === cleanName);
+        if (!entry) {
+            entry = {
+                name: cleanName,
+                charId: heroObj.id,
+                hero: heroObj.name,
+                wins: 0,
+                kills: 0,
+                pts: 0
+            };
+            list.push(entry);
+        } else {
+            entry.charId = heroObj.id;
+            entry.hero = heroObj.name;
+        }
+        this.saveList(list);
+        return entry;
+    },
+
+    async syncWithServer() {
+        const cfg = getPlayerConfig();
+        const myEntry = this.ensurePlayerEntry(cfg.nickname, cfg.charId);
+        try {
+            // Envia pontuação do jogador atual se tiver pontos
+            if (myEntry.pts > 0 || myEntry.wins > 0 || myEntry.kills > 0) {
+                await fetch('/api/ranking', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(myEntry)
+                });
+            }
+            const res = await fetch('/api/ranking');
+            if (res.ok) {
+                const remoteList = await res.json();
+                if (Array.isArray(remoteList)) {
+                    const localList = this.getList();
+                    remoteList.forEach(rem => {
+                        const existing = localList.find(l => l.name.toUpperCase() === rem.name.toUpperCase());
+                        if (existing) {
+                            existing.wins = Math.max(existing.wins || 0, rem.wins || 0);
+                            existing.kills = Math.max(existing.kills || 0, rem.kills || 0);
+                            existing.pts = Math.max(existing.pts || 0, rem.pts || 0);
+                            existing.charId = rem.charId || existing.charId;
+                            existing.hero = rem.hero || existing.hero;
+                        } else {
+                            localList.push(rem);
+                        }
+                    });
+                    this.saveList(localList);
+                }
+            }
+        } catch (e) {}
+        this.render();
+    },
+
+    render() {
+        const cfg = getPlayerConfig();
+        const currentNick = cfg.nickname.toUpperCase();
+        this.ensurePlayerEntry(currentNick, cfg.charId);
+
+        const sorted = this.getList().sort((a, b) => (b.pts || 0) - (a.pts || 0) || (b.wins || 0) - (a.wins || 0));
+
+        // Renderiza Pódio Top 3 (2º Prata, 1º Ouro, 3º Bronze)
+        const podiumEl = document.getElementById('ranking-podium');
+        if (podiumEl) {
+            const p1 = sorted[0] || { name: currentNick, charId: 'kaelen', pts: 0 };
+            const p2 = sorted[1] || { name: 'SHADOW_99', charId: 'elara', pts: 0 };
+            const p3 = sorted[2] || { name: 'VALKYRIE_X', charId: 'malacor', pts: 0 };
+
+            podiumEl.innerHTML = `
+                <div class="podium-card silver">
+                    <div class="podium-rank">2º</div>
+                    <div class="podium-avatar"><img src="assets/${p2.charId || 'elara'}.png" alt="2º Lugar"></div>
+                    <div class="podium-name">${escapeHtml(p2.name)}</div>
+                    <div class="podium-pts">${(p2.pts || 0).toLocaleString('pt-BR')} PTS</div>
+                </div>
+                <div class="podium-card gold">
+                    <div class="crown-icon"><i class="fas fa-crown"></i></div>
+                    <div class="podium-rank">1º</div>
+                    <div class="podium-avatar"><img src="assets/${p1.charId || 'kaelen'}.png" alt="1º Lugar"></div>
+                    <div class="podium-name">${escapeHtml(p1.name)}</div>
+                    <div class="podium-pts">${(p1.pts || 0).toLocaleString('pt-BR')} PTS</div>
+                </div>
+                <div class="podium-card bronze">
+                    <div class="podium-rank">3º</div>
+                    <div class="podium-avatar"><img src="assets/${p3.charId || 'malacor'}.png" alt="3º Lugar"></div>
+                    <div class="podium-name">${escapeHtml(p3.name)}</div>
+                    <div class="podium-pts">${(p3.pts || 0).toLocaleString('pt-BR')} PTS</div>
+                </div>
+            `;
+        }
+
+        // Renderiza Tabela Completa
+        const tbody = document.getElementById('ranking-tbody');
+        if (tbody) {
+            tbody.innerHTML = sorted.slice(0, 12).map((row, idx) => {
+                const isMe = row.name.toUpperCase() === currentNick;
+                return `
+                    <tr class="${isMe ? 'current-user-row' : ''}">
+                        <td>#${idx + 1}</td>
+                        <td><strong>${escapeHtml(row.name)}${isMe ? ' (VOCÊ)' : ''}</strong></td>
+                        <td>${escapeHtml((row.hero || row.charId || 'KAELEN').toUpperCase())}</td>
+                        <td>${row.wins || 0}</td>
+                        <td>${row.kills || 0}</td>
+                        <td class="pts-cell">${(row.pts || 0).toLocaleString('pt-BR')}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    }
+};
 
 // ==========================================
 // 4. SELEÇÃO & RENDERIZAÇÃO DO ROSTER
@@ -359,7 +505,10 @@ function renderRoster() {
         thumb.classList.add('char-thumb');
         if (index === selectedCharIndex) thumb.classList.add('active');
 
-        thumb.innerHTML = `<img src="${char.img}" alt="${char.name}" loading="lazy">`;
+        thumb.innerHTML = `
+            <img src="${char.img}" alt="${char.name}" loading="lazy">
+            <span class="thumb-name">${char.name}</span>
+        `;
 
         thumb.addEventListener('mouseenter', () => AudioEngine.play('hover'));
 
@@ -474,11 +623,14 @@ if (btnPlay) {
     });
 }
 
-// Botão de Ranking
+// Botão de Ranking (Renderiza e Sincroniza Ranking Real)
+RankingSystem.syncWithServer();
 const btnRanking = document.getElementById('btn-ranking');
 if (btnRanking && rankingModal) {
     btnRanking.addEventListener('click', () => {
         AudioEngine.play('click');
+        RankingSystem.render();
+        RankingSystem.syncWithServer();
         rankingModal.classList.remove('hidden');
     });
 }

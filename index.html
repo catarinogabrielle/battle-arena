@@ -238,26 +238,8 @@
             <h2 class="modal-title"><i class="fas fa-trophy" style="color: #ffd700;"></i> RANKING GLOBAL</h2>
             <p class="ranking-subtitle">Temporada 1: Despertar dos Titãs Cósmicos</p>
 
-            <div class="ranking-podium">
-                <div class="podium-card silver">
-                    <div class="podium-rank">2º</div>
-                    <div class="podium-avatar"><img src="assets/elara.png" alt="2º Lugar"></div>
-                    <div class="podium-name">SHADOW_99</div>
-                    <div class="podium-pts">2.610 PTS</div>
-                </div>
-                <div class="podium-card gold">
-                    <div class="crown-icon"><i class="fas fa-crown"></i></div>
-                    <div class="podium-rank">1º</div>
-                    <div class="podium-avatar"><img src="assets/kaelen.png" alt="1º Lugar"></div>
-                    <div class="podium-name" id="rank-top1-name">CATARINO</div>
-                    <div class="podium-pts">2.850 PTS</div>
-                </div>
-                <div class="podium-card bronze">
-                    <div class="podium-rank">3º</div>
-                    <div class="podium-avatar"><img src="assets/malacor.png" alt="3º Lugar"></div>
-                    <div class="podium-name">VALKYRIE_X</div>
-                    <div class="podium-pts">2.420 PTS</div>
-                </div>
+            <div class="ranking-podium" id="ranking-podium">
+                <!-- Pódio 1º, 2º e 3º renderizado dinamicamente via script-menu.js -->
             </div>
 
             <div class="ranking-table-wrap">
@@ -268,45 +250,12 @@
                             <th>JOGADOR</th>
                             <th>HERÓI</th>
                             <th>VITÓRIAS</th>
+                            <th>ABATES</th>
                             <th>PONTOS</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr class="current-user-row">
-                            <td>#1</td>
-                            <td><strong id="rank-user-name">CATARINO (VOCÊ)</strong></td>
-                            <td>KAELEN</td>
-                            <td>42</td>
-                            <td class="pts-cell">2.850</td>
-                        </tr>
-                        <tr>
-                            <td>#2</td>
-                            <td>SHADOW_99</td>
-                            <td>ELARA</td>
-                            <td>38</td>
-                            <td class="pts-cell">2.610</td>
-                        </tr>
-                        <tr>
-                            <td>#3</td>
-                            <td>VALKYRIE_X</td>
-                            <td>MALACOR</td>
-                            <td>35</td>
-                            <td class="pts-cell">2.420</td>
-                        </tr>
-                        <tr>
-                            <td>#4</td>
-                            <td>PHOENIX_BR</td>
-                            <td>MORWEN</td>
-                            <td>31</td>
-                            <td class="pts-cell">2.190</td>
-                        </tr>
-                        <tr>
-                            <td>#5</td>
-                            <td>GHOST_STRIKE</td>
-                            <td>SILAS</td>
-                            <td>28</td>
-                            <td class="pts-cell">2.050</td>
-                        </tr>
+                    <tbody id="ranking-tbody">
+                        <!-- Tabela renderizada dinamicamente via script-menu.js -->
                     </tbody>
                 </table>
             </div>
