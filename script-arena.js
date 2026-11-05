@@ -1351,13 +1351,24 @@ const Game = {
         const localPlayer = this.players.find(p => p.id === this.localPlayerId);
         if (isTouchDevice && localPlayer) {
             const zoom = 2.2;
+            const halfViewWidth = canvas.width / (2 * zoom);
+            const halfViewHeight = canvas.height / (2 * zoom);
+            const cameraX = Math.max(halfViewWidth, Math.min(canvas.width - halfViewWidth, localPlayer.x));
+            const cameraY = Math.max(halfViewHeight, Math.min(canvas.height - halfViewHeight, localPlayer.y));
+            const backgroundX = (zoom * (cameraX / canvas.width) - 0.5) / (zoom - 1) * 100;
+            const backgroundY = (zoom * (cameraY / canvas.height) - 0.5) / (zoom - 1) * 100;
+            canvas.style.backgroundSize = `${zoom * 100}% ${zoom * 100}%`;
+            canvas.style.backgroundPosition = `${backgroundX}% ${backgroundY}%`;
             ctx.translate(canvas.width / 2, canvas.height / 2);
             ctx.scale(zoom, zoom);
-            ctx.translate(-localPlayer.x, -localPlayer.y);
+            ctx.translate(-cameraX, -cameraY);
         }
 
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.fillStyle = "rgba(10, 0, 20, 0.75)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
         ctx.arc(this.zone.x, this.zone.y, Math.max(0, this.zone.radius), 0, Math.PI * 2);
