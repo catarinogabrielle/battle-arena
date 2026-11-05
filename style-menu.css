@@ -1758,6 +1758,17 @@ kbd {
         max-height: 92dvh;
     }
 
+    #room-modal .modal-content {
+        padding-top: 56px;
+    }
+
+    #room-modal .close-btn {
+        top: 8px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+    }
+
     .modal-title {
         font-size: 1.15em;
         margin-bottom: 4px;
