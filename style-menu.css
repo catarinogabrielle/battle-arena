@@ -1759,11 +1759,11 @@ kbd {
     }
 
     #room-modal .modal-content {
-        padding-top: 56px;
+        padding-top: 48px;
     }
 
     #room-modal .close-btn {
-        top: 8px;
+        top: 4px;
         right: 10px;
         width: 40px;
         height: 40px;

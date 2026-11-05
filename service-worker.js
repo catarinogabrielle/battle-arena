@@ -3,7 +3,7 @@
  * Permite funcionamento offline (PWA) e cache acelerado de assets
  */
 
-const CACHE_NAME = 'battle-arena-v2.7';
+const CACHE_NAME = 'battle-arena-v2.8';
 
 const STATIC_ASSETS = [
     './',
