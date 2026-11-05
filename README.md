@@ -89,3 +89,9 @@ http://localhost:3000
 ```
 
 > **Dica:** Para testar o multiplayer com amigos na mesma rede local (Wi-Fi), basta eles acessarem o seu IP local (ex: `http://192.168.x.x:3000`).
+
+### Hospedagem do Multiplayer
+
+O multiplayer usa conexões persistentes do Socket.IO. Para partidas online, hospede o projeto em um serviço Node.js que suporte WebSocket e mantenha o processo `npm start` ativo.
+
+> **Atenção:** A configuração serverless da Vercel (`vercel.json`) pode servir a interface e a API, mas não mantém as conexões Socket.IO necessárias para as partidas em tempo real. Para habilitar multiplayer em produção, hospede o servidor em uma plataforma Node.js com suporte a WebSocket.
