@@ -1582,6 +1582,8 @@ const LoadingManager = {
     progress: 0,
     interval: null,
     finished: false,
+    startedAt: 0,
+    duration: 1800,
     bar: document.getElementById('loading-bar-fill'),
     text: document.getElementById('loading-text'),
     screen: document.getElementById('loading-screen'),
@@ -1603,12 +1605,11 @@ const LoadingManager = {
         }
         window.addEventListener('keydown', (e) => { if (e.code === 'Space') skip(); }, { once: true });
 
-        // Carregamento suave em ~3 segundos
+        this.startedAt = Date.now();
         this.interval = setInterval(() => {
-            this.progress += 2.2;
+            this.progress = Math.min(100, ((Date.now() - this.startedAt) / this.duration) * 100);
 
             if (this.progress >= 100) {
-                this.progress = 100;
                 clearInterval(this.interval);
                 this.updateUI();
                 setTimeout(() => this.finish(), 250);
@@ -1673,8 +1674,12 @@ const CountdownManager = {
     }
 };
 
-// Inicia carregamento
-window.onload = () => LoadingManager.start();
+// Inicia assim que o HTML está pronto; não espera fontes ou imagens externas.
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => LoadingManager.start(), { once: true });
+} else {
+    LoadingManager.start();
+}
 
 const btnRotateFs = document.getElementById('btn-fullscreen-rotate');
 if (btnRotateFs) {
