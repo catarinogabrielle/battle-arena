@@ -1137,8 +1137,8 @@ canvas {
 }
 
 .joystick-base {
-    width: 104px;
-    height: 104px;
+    width: 112px;
+    height: 112px;
     border-radius: 50%;
     background: rgba(0, 210, 255, 0.08);
     border: 2px solid rgba(0, 210, 255, 0.45);
@@ -1150,8 +1150,8 @@ canvas {
 }
 
 .joystick-stick {
-    width: 42px;
-    height: 42px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
     background: linear-gradient(135deg, #00d2ff, #00ff88);
     box-shadow: 0 0 14px #00d2ff;
@@ -1188,15 +1188,15 @@ canvas {
 
 .touch-btn-label {
     font-family: 'Rajdhani', sans-serif;
-    font-size: 8.5px;
+    font-size: 9px;
     font-weight: 800;
     letter-spacing: 0.5px;
     line-height: 1;
 }
 
 .btn-attack {
-    width: 68px;
-    height: 68px;
+    width: 76px;
+    height: 76px;
     background: linear-gradient(135deg, rgba(255, 61, 104, 0.88), rgba(200, 20, 50, 0.96));
     color: white;
     font-size: 1.35em;
@@ -1210,8 +1210,8 @@ canvas {
 }
 
 .btn-sprint {
-    width: 48px;
-    height: 48px;
+    width: 54px;
+    height: 54px;
     background: rgba(8, 16, 32, 0.8);
     color: #00d2ff;
     font-size: 1.05em;
@@ -1287,32 +1287,32 @@ canvas {
 
     /* Joystick e Botões Touch em Paisagem */
     .joystick-zone {
-        bottom: 10px;
-        left: 12px;
-        width: 118px;
-        height: 118px;
+        bottom: 8px;
+        left: 10px;
+        width: 136px;
+        height: 136px;
     }
     .joystick-base {
-        width: 92px;
-        height: 92px;
+        width: 108px;
+        height: 108px;
     }
     .joystick-stick {
-        width: 38px;
-        height: 38px;
-    }
-    .touch-actions-zone {
-        bottom: 10px;
-        right: 14px;
-        gap: 8px;
-    }
-    .btn-sprint {
         width: 44px;
         height: 44px;
+    }
+    .touch-actions-zone {
+        bottom: 8px;
+        right: 12px;
+        gap: 6px;
+    }
+    .btn-sprint {
+        width: 50px;
+        height: 50px;
         font-size: 0.95em;
     }
     .btn-attack {
-        width: 60px;
-        height: 60px;
+        width: 72px;
+        height: 72px;
         font-size: 1.2em;
     }
 

@@ -44,7 +44,7 @@ const sessionData = JSON.parse(sessionStorage.getItem('arenaSession') || 'null')
 const isOnlineRequested = !!roomParam || (sessionData && sessionData.isOnline);
 let gameInitialized = false;
 
-// Resolução lógica padronizada (Garante que 100% do campo de batalha apareça no Mobile e PC sem cortes!)
+// Resolução lógica padronizada para manter as mesmas dimensões de jogo em todas as telas.
 const LOGICAL_HEIGHT = 1080;
 function resizeCanvas() {
     const prevW = canvas.width || 1920;
@@ -1346,6 +1346,14 @@ const Game = {
         if (this.shakeFrames > 0) {
             ctx.translate(Math.random() * 10 - 5, Math.random() * 10 - 5);
             this.shakeFrames--;
+        }
+
+        const localPlayer = this.players.find(p => p.id === this.localPlayerId);
+        if (isTouchDevice && localPlayer) {
+            const zoom = 1.35;
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.scale(zoom, zoom);
+            ctx.translate(-localPlayer.x, -localPlayer.y);
         }
 
         ctx.fillStyle = "rgba(10, 0, 20, 0.75)";
