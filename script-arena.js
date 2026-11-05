@@ -42,6 +42,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const roomParam = urlParams.get('room');
 const sessionData = JSON.parse(sessionStorage.getItem('arenaSession') || 'null');
 const isOnlineRequested = !!roomParam || (sessionData && sessionData.isOnline);
+let gameInitialized = false;
 
 // Resolução lógica padronizada (Garante que 100% do campo de batalha apareça no Mobile e PC sem cortes!)
 const LOGICAL_HEIGHT = 1080;
@@ -57,7 +58,7 @@ function resizeCanvas() {
 
     // Se a partida local já estiver rodando e a tela mudar (ex: entrou em Tela Cheia),
     // mantém o centro da arena e desloca os jogadores proporcionalmente sem cortar nada
-    if (typeof Game !== 'undefined' && Game.zone && Game.zone.radius > 0 && !Game.isOnline) {
+    if (gameInitialized && Game.zone && Game.zone.radius > 0 && !Game.isOnline) {
         const dx = (canvas.width / 2) - (prevW / 2);
         const dy = (canvas.height / 2) - (prevH / 2);
         if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
@@ -996,6 +997,51 @@ class Player {
 // ==========================================
 // GAME ENGINE (LOCAL & ONLINE)
 // ==========================================
+const onlineLobby = {
+    overlay: document.getElementById('online-lobby'),
+    status: document.getElementById('online-lobby-status'),
+    code: document.getElementById('online-lobby-code'),
+    players: document.getElementById('online-player-list'),
+    addBot: document.getElementById('btn-online-add-bot'),
+    start: document.getElementById('btn-online-start')
+};
+
+function renderOnlineLobby(room) {
+    if (!room || !onlineLobby.overlay) return;
+    onlineLobby.overlay.classList.remove('hidden');
+    onlineLobby.code.innerText = room.code ? `CÓDIGO: #${room.code}` : '';
+    onlineLobby.players.innerHTML = '';
+
+    (room.players || []).forEach((player) => {
+        const item = document.createElement('li');
+        item.innerText = `${player.name}${player.isHost ? ' • HOST' : ''}${player.isBot ? ' • BOT' : ''}`;
+        item.style.borderColor = player.color || '';
+        onlineLobby.players.appendChild(item);
+    });
+
+    const isHost = Game.socket && room.hostId === Game.socket.id;
+    onlineLobby.addBot.classList.toggle('hidden', !isHost);
+    onlineLobby.start.classList.toggle('hidden', !isHost);
+    onlineLobby.addBot.disabled = (room.players || []).length >= room.maxPlayers;
+    onlineLobby.start.disabled = (room.players || []).length < 2;
+    onlineLobby.status.innerText = isHost
+        ? (onlineLobby.start.disabled ? 'Aguardando outro jogador ou adicione um bot para começar.' : 'Sala pronta. Inicie quando todos estiverem preparados.')
+        : 'Aguardando o anfitrião iniciar a partida...';
+}
+
+if (onlineLobby.addBot) {
+    onlineLobby.addBot.addEventListener('click', () => {
+        if (Game.socket && Game.socket.connected) Game.socket.emit('add_bot');
+    });
+}
+if (onlineLobby.start) {
+    onlineLobby.start.addEventListener('click', () => {
+        if (Game.socket && Game.socket.connected && !onlineLobby.start.disabled) {
+            Game.socket.emit('start_match');
+        }
+    });
+}
+
 const Game = {
     active: true,
     isOnline: false,
@@ -1073,11 +1119,51 @@ const Game = {
         const connectSocket = () => {
             try {
                 const url = window.location.protocol.startsWith('http') ? window.location.origin : 'http://localhost:3000';
-                this.socket = io(url);
+                let sharedSocket = null;
+                try {
+                    if (window.parent !== window) sharedSocket = window.parent.battleArenaSocket || null;
+                } catch (e) {}
+                this.socket = sharedSocket || io(url);
 
-                this.socket.on('connect', () => {
+                const handleConnected = () => {
                     this.isOnline = true;
                     this.localPlayerId = this.socket.id;
+                    const room = this.socket.battleArenaRoom;
+                    if (room) {
+                        this.socket.battleArenaRoom = room;
+                        renderOnlineLobby(room);
+                    } else if ((sessionData && sessionData.roomCode) || roomParam) {
+                        this.socket.emit('join_room', {
+                            code: (sessionData && sessionData.roomCode) || roomParam,
+                            playerInfo: savedData
+                        });
+                        renderOnlineLobby({ code: (sessionData && sessionData.roomCode) || roomParam, players: [], maxPlayers: 0 });
+                    }
+                };
+
+                this.socket.on('connect', handleConnected);
+                this.socket.on('room_joined', (data) => {
+                    this.socket.battleArenaRoom = data.room;
+                    this.socket.battleArenaIsHost = data.isHost;
+                    renderOnlineLobby(data.room);
+                });
+                this.socket.on('lobby_updated', (room) => {
+                    this.socket.battleArenaRoom = room;
+                    renderOnlineLobby(room);
+                });
+                this.socket.on('match_starting', (data) => {
+                    onlineLobby.status.innerText = `A partida começa em ${data.countdown}...`;
+                    onlineLobby.start.disabled = true;
+                    onlineLobby.addBot.disabled = true;
+                });
+                this.socket.on('game_started', () => {
+                    onlineLobby.overlay.classList.add('hidden');
+                    this.active = true;
+                });
+                this.socket.on('join_error', (error) => {
+                    onlineLobby.overlay.classList.remove('hidden');
+                    onlineLobby.status.innerText = error.message || 'Não foi possível entrar na sala.';
+                    onlineLobby.start.disabled = false;
                 });
 
                 this.socket.on('game_snapshot', (snapshot) => {
@@ -1135,15 +1221,23 @@ const Game = {
                 });
 
                 this.socket.on('connect_error', () => {
+                    onlineLobby.overlay.classList.add('hidden');
                     this.initLocal();
                 });
 
+                if (this.socket.connected) handleConnected();
             } catch (e) {
+                onlineLobby.overlay.classList.add('hidden');
                 this.initLocal();
             }
         };
 
-        if (typeof io !== 'undefined') {
+        let parentSocket = null;
+        try {
+            if (window.parent !== window) parentSocket = window.parent.battleArenaSocket || null;
+        } catch (e) {}
+
+        if (parentSocket || typeof io !== 'undefined') {
             connectSocket();
         } else {
             const script = document.createElement('script');
@@ -1386,6 +1480,7 @@ const Game = {
         }, 1500);
     }
 };
+gameInitialized = true;
 
 // ==========================================
 // NAVEGAÇÃO SEGURA & PRESERVAÇÃO DO MODO DE JOGO (TELA CHEIA)
@@ -1420,6 +1515,14 @@ function requestArenaFullscreen() {
 }
 
 window.closeArenaToMenu = function () {
+    try {
+        if (Game.socket && Game.socket.connected) Game.socket.emit('leave_room');
+        if (Game.socket) {
+            Game.socket.battleArenaRoom = null;
+            Game.socket.battleArenaIsHost = false;
+        }
+        sessionStorage.removeItem('arenaSession');
+    } catch (e) {}
     try {
         if (window.parent && window.parent !== window && typeof window.parent.closeArenaEmbed === 'function') {
             window.parent.closeArenaEmbed();

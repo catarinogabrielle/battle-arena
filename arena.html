@@ -157,6 +157,24 @@
         </div>
     </footer>
 
+    <div id="online-lobby" class="hidden overlay-screen online-lobby-overlay">
+        <div class="online-lobby-card">
+            <div class="tutorial-badge"><i class="fas fa-globe"></i> MULTIPLAYER ONLINE</div>
+            <h2 class="online-lobby-title">SALA DE ESPERA</h2>
+            <p id="online-lobby-status" class="online-lobby-status">Conectando à sala...</p>
+            <p id="online-lobby-code" class="online-lobby-code"></p>
+            <ul id="online-player-list" class="online-player-list"></ul>
+            <div class="online-lobby-actions">
+                <button id="btn-online-add-bot" class="btn-secondary hidden" type="button">
+                    <i class="fas fa-robot"></i> ADICIONAR BOT
+                </button>
+                <button id="btn-online-start" class="btn-primary hidden" type="button" disabled>
+                    <i class="fas fa-play"></i> INICIAR PARTIDA
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- CONTROLES MOBILE / TOUCH (EXIBIDOS AUTOMATICAMENTE EM DISPOSITIVOS DE TOQUE) -->
     <div id="mobile-controls" class="mobile-controls-layer">
         <div id="joystick-zone" class="joystick-zone">

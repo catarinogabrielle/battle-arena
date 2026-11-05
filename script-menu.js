@@ -812,9 +812,14 @@ loadSocketIO(() => {
     try {
         const url = window.location.protocol.startsWith('http') ? window.location.origin : 'http://localhost:3000';
         socket = io(url, { reconnectionAttempts: 3, timeout: 4000 });
+        window.battleArenaSocket = socket;
 
         socket.on('connect', () => {
             socket.emit('get_rooms');
+        });
+
+        socket.on('lobby_updated', (room) => {
+            socket.battleArenaRoom = room;
         });
 
         socket.on('room_list_updated', (rooms) => {
@@ -822,6 +827,8 @@ loadSocketIO(() => {
         });
 
         socket.on('room_joined', (data) => {
+            socket.battleArenaRoom = data.room;
+            socket.battleArenaIsHost = data.isHost;
             const playerConfig = getPlayerConfig();
             localStorage.setItem('arenaPlayer', JSON.stringify(playerConfig));
             sessionStorage.setItem('arenaSession', JSON.stringify({
@@ -844,9 +851,12 @@ loadSocketIO(() => {
         });
 
         socket.on('join_error', (err) => {
-            showArenaPopup('ERRO NA SALA', err.message || 'Erro ao entrar na sala.', '<i class="fas fa-exclamation-triangle" style="color:#ff3d68;"></i>');
+            const arenaIsOpen = arenaEmbedOverlay && !arenaEmbedOverlay.classList.contains('hidden');
+            if (!arenaIsOpen) {
+                showArenaPopup('ERRO NA SALA', err.message || 'Erro ao entrar na sala.', '<i class="fas fa-exclamation-triangle" style="color:#ff3d68;"></i>');
+            }
             const btn = document.getElementById('btn-confirm-create');
-            if (btn) btn.innerHTML = '<span>CRIAR E INICIAR</span> <i class="fas fa-rocket"></i>';
+            if (btn) btn.innerHTML = '<span>CRIAR SALA</span> <i class="fas fa-rocket"></i>';
         });
 
     } catch (e) {
@@ -1035,7 +1045,7 @@ if (btnConfirmCreate) {
                 map: map,
                 maxPlayers: players,
                 isPrivate: isPrivate,
-                fillBots: true,
+                fillBots: false,
                 playerInfo: playerConfig
             });
         } else {
