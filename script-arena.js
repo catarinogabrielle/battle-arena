@@ -1350,7 +1350,7 @@ const Game = {
 
         const localPlayer = this.players.find(p => p.id === this.localPlayerId);
         if (isTouchDevice && localPlayer) {
-            const zoom = 1.35;
+            const zoom = 2.2;
             ctx.translate(canvas.width / 2, canvas.height / 2);
             ctx.scale(zoom, zoom);
             ctx.translate(-localPlayer.x, -localPlayer.y);
