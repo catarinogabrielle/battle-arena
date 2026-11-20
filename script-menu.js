@@ -607,6 +607,50 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// ==========================================
+// INDICADOR DE STATUS OFFLINE
+// ==========================================
+(function setupOfflineIndicator() {
+    // Cria banner de status offline
+    const banner = document.createElement('div');
+    banner.id = 'offline-banner';
+    banner.innerHTML = '<i class="fas fa-wifi-slash"></i> Modo Offline — Apenas Batalha Solo disponível';
+    banner.style.cssText = `
+        position: fixed; bottom: 0; left: 0; right: 0;
+        background: linear-gradient(90deg, #ff4444, #cc0000);
+        color: #fff; text-align: center; padding: 8px 16px;
+        font-family: 'Rajdhani', sans-serif; font-size: 0.9rem; font-weight: 600;
+        z-index: 9999; display: none;
+        letter-spacing: 0.05em; border-top: 2px solid rgba(255,100,100,0.5);
+        box-shadow: 0 -4px 20px rgba(255,0,0,0.3);
+        transition: transform 0.3s ease;
+    `;
+    document.body.appendChild(banner);
+
+    function updateOnlineStatus() {
+        if (!navigator.onLine) {
+            banner.style.display = 'block';
+            // Desativa o botão de salas online se existir
+            const btnSalas = document.getElementById('btn-salas');
+            if (btnSalas) {
+                btnSalas.style.opacity = '0.5';
+                btnSalas.title = 'Sem conexão — Jogue no Modo Solo';
+            }
+        } else {
+            banner.style.display = 'none';
+            const btnSalas = document.getElementById('btn-salas');
+            if (btnSalas) {
+                btnSalas.style.opacity = '';
+                btnSalas.title = '';
+            }
+        }
+    }
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus(); // checa estado inicial
+}());
+
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPWAInstallPrompt = e;
